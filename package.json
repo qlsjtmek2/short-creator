@@ -9,7 +9,7 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "clean": "rm -rf output/images/* output/audio/* output/frames/* output/videos/*",
-    "lint": "eslint .",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint .",
     "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:gemini": "ts-node scripts/test-apis/test-gemini.ts",
@@ -18,7 +18,8 @@
     "test:generator": "ts-node scripts/test-gemini-generator.ts",
     "test:image": "ts-node scripts/test-pexels-provider.ts",
     "test:frame": "ts-node scripts/test-frame-composer.ts",
-    "test:video": "ts-node scripts/test-video-renderer.ts"
+    "test:video": "ts-node scripts/test-video-renderer.ts",
+    "download:bgm": "ts-node scripts/download-bgm.ts"
   },
   "repository": {
     "type": "git",
