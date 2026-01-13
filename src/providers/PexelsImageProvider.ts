@@ -1,13 +1,13 @@
-import axios from "axios";
-import * as fs from "fs";
-import * as path from "path";
-import { IImageProvider } from "../../types/interfaces";
+import axios, { AxiosError } from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
+import { IImageProvider } from '../../types/interfaces';
 
 export class PexelsImageProvider implements IImageProvider {
   private apiKey: string;
   private outputDir: string;
 
-  constructor(apiKey: string, outputDir: string = "output/images") {
+  constructor(apiKey: string, outputDir: string = 'output/images') {
     this.apiKey = apiKey;
     this.outputDir = outputDir;
 
@@ -21,16 +21,19 @@ export class PexelsImageProvider implements IImageProvider {
 
     try {
       // 1. Pexels API 검색
-      const searchResponse = await axios.get("https://api.pexels.com/v1/search", {
-        params: {
-          query: keyword,
-          per_page: 1,
-          orientation: "portrait", // 쇼츠용이므로 세로형 우선 검색
+      const searchResponse = await axios.get(
+        'https://api.pexels.com/v1/search',
+        {
+          params: {
+            query: keyword,
+            per_page: 1,
+            orientation: 'portrait', // 쇼츠용이므로 세로형 우선 검색
+          },
+          headers: {
+            Authorization: this.apiKey,
+          },
         },
-        headers: {
-          Authorization: this.apiKey,
-        },
-      });
+      );
 
       const photos = searchResponse.data.photos;
       if (!photos || photos.length === 0) {
@@ -38,14 +41,14 @@ export class PexelsImageProvider implements IImageProvider {
       }
 
       const imageUrl = photos[0].src.large2x || photos[0].src.original;
-      const extension = path.extname(new URL(imageUrl).pathname) || ".jpg";
+      const extension = path.extname(new URL(imageUrl).pathname) || '.jpg';
       const fileName = `${encodeURIComponent(keyword)}_${Date.now()}${extension}`;
       const filePath = path.join(this.outputDir, fileName);
 
       // 2. 이미지 다운로드
       console.log(`⏳ Downloading image from: ${imageUrl}`);
       const imageResponse = await axios.get(imageUrl, {
-        responseType: "arraybuffer",
+        responseType: 'arraybuffer',
       });
 
       // 3. 파일 저장
@@ -53,8 +56,16 @@ export class PexelsImageProvider implements IImageProvider {
       console.log(`✅ Image saved to: ${filePath}`);
 
       return filePath;
-    } catch (error: any) {
-      console.error("Failed to download image from Pexels:", error.response?.data || error.message);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const err = error as AxiosError;
+        console.error(
+          'Failed to download image from Pexels:',
+          err.response?.data || err.message,
+        );
+      } else {
+        console.error('Failed to download image from Pexels:', error);
+      }
       throw error;
     }
   }

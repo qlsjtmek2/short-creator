@@ -1,4 +1,4 @@
-import { WouldYouRatherQuestion, VideoConfig } from './common';
+import { WouldYouRatherQuestion } from './common';
 
 /**
  * Phase 5: 질문 생성 모듈 인터페이스
@@ -47,7 +47,7 @@ export interface IFrameComposer {
   composeFrame(
     question: WouldYouRatherQuestion,
     imageAPath: string,
-    imageBPath: string
+    imageBPath: string,
   ): Promise<string>;
 }
 
@@ -65,6 +65,6 @@ export interface IVideoRenderer {
   renderVideo(
     framePath: string,
     audioPath: string,
-    outputPath: string
+    outputPath: string,
   ): Promise<string>;
 }
