@@ -33,13 +33,17 @@ export class CanvasFrameComposer implements IFrameComposer {
     const canvas = createCanvas(this.width, this.height);
     const ctx = canvas.getContext("2d");
 
-    // 1. 배경 그리기 (상단: 빨강, 하단: 파랑)
-    // 상단 배경 (옵션 A)
-    ctx.fillStyle = "#FF4B4B"; // 부드러운 빨강
+    // 1. 배경 그리기 (상단: 빨강 그라데이션, 하단: 파랑 그라데이션)
+    const redGradient = ctx.createLinearGradient(0, 0, 0, this.height / 2);
+    redGradient.addColorStop(0, "#FF6B6B");
+    redGradient.addColorStop(1, "#EE5253");
+    ctx.fillStyle = redGradient;
     ctx.fillRect(0, 0, this.width, this.height / 2);
 
-    // 하단 배경 (옵션 B)
-    ctx.fillStyle = "#4B7BFF"; // 부드러운 파랑
+    const blueGradient = ctx.createLinearGradient(0, this.height / 2, 0, this.height);
+    blueGradient.addColorStop(0, "#48DBFB");
+    blueGradient.addColorStop(1, "#2E86DE");
+    ctx.fillStyle = blueGradient;
     ctx.fillRect(0, this.height / 2, this.width, this.height / 2);
 
     // 2. 이미지 그리기 (상/하단 중앙 배치, Cover 모드 흉내)

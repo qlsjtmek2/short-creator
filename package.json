@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "ts-node src/index.ts",
+    "clean": "rm -rf output/images/* output/audio/* output/frames/* output/videos/*",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
