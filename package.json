@@ -13,7 +13,8 @@
     "test:gemini": "ts-node scripts/test-apis/test-gemini.ts",
     "test:pexels": "ts-node scripts/test-apis/test-pexels.ts",
     "test:typecast": "ts-node scripts/test-apis/test-typecast.ts",
-    "test:generator": "ts-node scripts/test-gemini-generator.ts"
+    "test:generator": "ts-node scripts/test-gemini-generator.ts",
+    "test:image": "ts-node scripts/test-pexels-provider.ts"
   },
   "repository": {
     "type": "git",
