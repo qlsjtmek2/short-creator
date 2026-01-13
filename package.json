@@ -14,7 +14,8 @@
     "test:pexels": "ts-node scripts/test-apis/test-pexels.ts",
     "test:typecast": "ts-node scripts/test-apis/test-typecast.ts",
     "test:generator": "ts-node scripts/test-gemini-generator.ts",
-    "test:image": "ts-node scripts/test-pexels-provider.ts"
+    "test:image": "ts-node scripts/test-pexels-provider.ts",
+    "test:frame": "ts-node scripts/test-frame-composer.ts"
   },
   "repository": {
     "type": "git",
@@ -44,6 +45,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.2",
+    "canvas": "^3.2.1",
     "uuid": "^13.0.0"
   }
 }
