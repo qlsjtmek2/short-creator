@@ -1,4 +1,6 @@
 import * as dotenv from "dotenv";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 import { GeminiQuestionGenerator } from "./generators/GeminiQuestionGenerator";
 import { PexelsImageProvider } from "./providers/PexelsImageProvider";
 import { MockTTSProvider } from "./providers/MockTTSProvider";
@@ -10,6 +12,16 @@ import * as path from "path";
 dotenv.config();
 
 async function bootstrap() {
+  const argv = await yargs(hideBin(process.argv))
+    .option("count", {
+      alias: "c",
+      type: "number",
+      description: "Number of shorts to generate",
+      default: 1,
+    })
+    .help()
+    .parse();
+
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
   const PEXELS_KEY = process.env.PEXELS_API_KEY;
 
@@ -29,8 +41,8 @@ async function bootstrap() {
   });
 
   try {
-    // 1개의 쇼츠를 생성해봅니다.
-    await generator.generate(1);
+    // CLI 인자로 받은 개수만큼 쇼츠 생성
+    await generator.generate(argv.count);
     console.log("\n✨ All tasks finished successfully!");
   } catch (error) {
     console.error("\n💥 Critical error during generation:", error);
