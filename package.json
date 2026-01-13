@@ -4,7 +4,7 @@
   "description": "> 한국어 Would You Rather 쇼츠를 자동으로 생성하는 시스템",
   "main": "index.js",
   "directories": {
-    "doc": "docs"
+    "lib": "lib"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,17 +22,15 @@
   },
   "homepage": "https://github.com/qlsjtmek2/short-creator#readme",
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@types/node": "^25.0.7",
+    "@types/node": "^25.0.8",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
+    "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "globals": "^17.0.0",
     "prettier": "^3.7.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.0"
+    "typescript": "^5.9.3"
   }
 }

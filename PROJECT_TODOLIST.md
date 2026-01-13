@@ -37,11 +37,11 @@
 **목표**: 개발 환경을 구축하고 기본 프로젝트 구조 생성
 
 ### 작업 목록
-- [ ] 프로젝트 폴더 구조 생성 (src/, lib/, output/ 등)
-- [ ] package.json 초기화 및 기본 설정
-- [ ] TypeScript 설정 (tsconfig.json)
-- [ ] ESLint + Prettier 설정
-- [ ] 환경 변수 템플릿 생성 (.env.example)
+- [x] 프로젝트 폴더 구조 생성 (src/, lib/, output/ 등)
+- [x] package.json 초기화 및 기본 설정
+- [x] TypeScript 설정 (tsconfig.json)
+- [x] ESLint + Prettier 설정
+- [x] 환경 변수 템플릿 생성 (.env.example)
 
 **예상 시간**: 30분
 
