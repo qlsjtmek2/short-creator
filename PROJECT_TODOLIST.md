@@ -114,21 +114,11 @@
 **목표**: Gemini API로 한국어 Would You Rather 질문 자동 생성
 
 ### 작업 목록
-- [ ] Gemini 질문 생성 모듈 기본 구조 (GeminiQuestionGenerator)
-- [ ] 한국어 Would You Rather 프롬프트 작성 및 최적화
-- [ ] Gemini Pro/Flash 모델 선택 및 설정
-- [ ] 질문 생성 테스트 (10개 샘플)
-- [ ] 생성된 질문 검증 로직 추가
-
-**프롬프트 예시**:
-```
-한국 20-30대가 진짜 고민할 만한 현실적이고 재미있는 Would You Rather 질문을 10개 생성해줘.
-Output Format: JSON Array
-{
-  "optionA": "평생 라면만 먹기",
-  "optionB": "평생 탄산만 마시기"
-}
-```
+- [x] Gemini 질문 생성 모듈 기본 구조 (GeminiQuestionGenerator)
+- [x] 한국어 Would You Rather 프롬프트 작성 및 최적화
+- [x] Gemini Pro/Flash 모델 선택 및 설정 (gemini-2.5-flash)
+- [x] 질문 생성 테스트 (10개 샘플 확인 완료)
+- [x] 생성된 질문 검증 로직 추가 (JSON 파싱 및 유효성 검사)
 
 **예상 시간**: 1.5시간
 
@@ -261,9 +251,9 @@ Output Format: JSON Array
 ## 📊 진행 상황
 
 ### 전체 진행률
-- **완료**: 16/65 (25%)
-- **진행 중**: Phase 6
-- **대기**: Phase 7-14
+- **완료**: 21/65 (32%)
+- **진행 중**: Phase 7
+- **대기**: Phase 8-14
 
 ### Phase별 진행률
 | Phase | 작업 수 | 완료 | 진행률 |
@@ -273,7 +263,7 @@ Output Format: JSON Array
 | Phase 3 | 2 | 2 | 100% |
 | Phase 4 | 4 | 4 | 100% |
 | Phase 5 | 4 | 3 | 75% |
-| Phase 6 | 4 | 0 | 0% |
+| Phase 6 | 5 | 5 | 100% |
 | Phase 7 | 4 | 0 | 0% |
 | Phase 8 | 4 | 0 | 0% |
 | Phase 9 | 8 | 0 | 0% |

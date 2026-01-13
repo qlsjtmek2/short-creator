@@ -12,7 +12,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:gemini": "ts-node scripts/test-apis/test-gemini.ts",
     "test:pexels": "ts-node scripts/test-apis/test-pexels.ts",
-    "test:typecast": "ts-node scripts/test-apis/test-typecast.ts"
+    "test:typecast": "ts-node scripts/test-apis/test-typecast.ts",
+    "test:generator": "ts-node scripts/test-gemini-generator.ts"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
   "homepage": "https://github.com/qlsjtmek2/short-creator#readme",
   "devDependencies": {
     "@types/node": "^25.0.8",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
     "dotenv": "^17.2.3",
@@ -40,6 +42,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "axios": "^1.13.2"
+    "axios": "^1.13.2",
+    "uuid": "^13.0.0"
   }
 }
