@@ -1,4 +1,9 @@
-import { WouldYouRatherQuestion } from './common';
+import {
+  WouldYouRatherQuestion,
+  StoryScript,
+  StoryScriptWithAssets,
+  SubtitleEvent,
+} from './common';
 
 /**
  * Phase 5: 질문 생성 모듈 인터페이스
@@ -66,5 +71,34 @@ export interface IVideoRenderer {
     framePath: string,
     audioPath: string,
     outputPath: string,
+  ): Promise<string>;
+}
+
+/**
+ * Phase 15: 스토리 생성 모듈 인터페이스
+ * Google Gemini API를 사용하여 스토리텔링 대본을 생성합니다.
+ */
+export interface IStoryGenerator {
+  generateStory(topic: string): Promise<StoryScript>;
+}
+
+/**
+ * Phase 15: 자막 생성 모듈 인터페이스
+ * ASS 자막 파일을 생성합니다.
+ */
+export interface ISubtitleGenerator {
+  generateASS(events: SubtitleEvent[], outputPath: string): Promise<string>;
+}
+
+/**
+ * Phase 15: 스토리 영상 렌더링 모듈 인터페이스
+ * FFmpeg를 사용하여 스토리텔링 쇼츠를 생성합니다.
+ */
+export interface IStoryVideoRenderer {
+  render(
+    script: StoryScriptWithAssets,
+    subtitlePath: string,
+    outputPath: string,
+    bgmPath?: string,
   ): Promise<string>;
 }

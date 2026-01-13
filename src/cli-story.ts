@@ -1,15 +1,15 @@
 import * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { GeminiQuestionGenerator } from './generators/GeminiQuestionGenerator';
+import { GeminiStoryGenerator } from './generators/GeminiStoryGenerator';
+import { SubtitleGenerator } from './generators/SubtitleGenerator';
 import { PexelsImageProvider } from './providers/PexelsImageProvider';
 import { ElevenLabsTTSProvider } from './providers/ElevenLabsTTSProvider';
 import { TypecastTTSProvider } from './providers/TypecastTTSProvider';
 import { OpenAITTSProvider } from './providers/OpenAITTSProvider';
 import { MockTTSProvider } from './providers/MockTTSProvider';
-import { CanvasFrameComposer } from './composers/CanvasFrameComposer';
-import { FFmpegVideoRenderer } from './renderers/FFmpegVideoRenderer';
-import { ShortsGenerator } from './ShortsGenerator';
+import { FFmpegStoryRenderer } from './renderers/FFmpegStoryRenderer';
+import { StoryOrchestrator } from './StoryOrchestrator';
 import * as path from 'path';
 import { ITTSProvider } from '../types/interfaces';
 
@@ -17,10 +17,16 @@ dotenv.config();
 
 async function bootstrap() {
   const argv = await yargs(hideBin(process.argv))
+    .option('topic', {
+      alias: 't',
+      type: 'string',
+      description: 'Story topic',
+      default: '흥미로운 과학 사실',
+    })
     .option('count', {
       alias: 'c',
       type: 'number',
-      description: 'Number of shorts to generate',
+      description: 'Number of story shorts to generate',
       default: 1,
     })
     .help()
@@ -56,21 +62,32 @@ async function bootstrap() {
   }
 
   // DI (Dependency Injection)
-  const generator = new ShortsGenerator({
-    questionGenerator: new GeminiQuestionGenerator(GEMINI_KEY),
-    imageProvider: new PexelsImageProvider(PEXELS_KEY),
-    ttsProvider: ttsProvider,
-    frameComposer: new CanvasFrameComposer(),
-    videoRenderer: new FFmpegVideoRenderer(),
-    outputDir: path.join(process.cwd(), 'output/videos'),
-  });
+  const storyOrchestrator = new StoryOrchestrator(
+    new GeminiStoryGenerator(),
+    new PexelsImageProvider(PEXELS_KEY),
+    ttsProvider,
+    new SubtitleGenerator(),
+    new FFmpegStoryRenderer(),
+  );
 
   try {
-    // CLI 인자로 받은 개수만큼 쇼츠 생성
-    await generator.generate(argv.count);
-    console.log('\n✨ All tasks finished successfully!');
+    console.log(
+      `\n📖 Generating ${argv.count} story shorts on topic: "${argv.topic}"\n`,
+    );
+
+    for (let i = 0; i < argv.count; i++) {
+      console.log(`\n[${i + 1}/${argv.count}] ======================`);
+      const videoPath = await storyOrchestrator.generateStoryShorts(
+        argv.topic,
+        path.join(process.cwd(), 'output'),
+      );
+      console.log(`✅ Story shorts created: ${videoPath}`);
+    }
+
+    console.log('\n✨ All story shorts generated successfully!');
   } catch (error) {
     console.error('\n💥 Critical error during generation:', error);
+    process.exit(1);
   }
 }
 

@@ -20,7 +20,7 @@ async function bootstrap() {
     .option('count', {
       alias: 'c',
       type: 'number',
-      description: 'Number of shorts to generate',
+      description: 'Number of Would You Rather shorts to generate',
       default: 1,
     })
     .help()
@@ -66,11 +66,12 @@ async function bootstrap() {
   });
 
   try {
-    // CLI 인자로 받은 개수만큼 쇼츠 생성
+    console.log(`\n🎬 Generating ${argv.count} Would You Rather shorts...\n`);
     await generator.generate(argv.count);
-    console.log('\n✨ All tasks finished successfully!');
+    console.log('\n✨ All Would You Rather shorts generated successfully!');
   } catch (error) {
     console.error('\n💥 Critical error during generation:', error);
+    process.exit(1);
   }
 }
 

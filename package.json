@@ -7,8 +7,10 @@
     "lib": "lib"
   },
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "clean": "rm -rf output/images/* output/audio/* output/frames/* output/videos/*",
+    "start": "npm run wyr",
+    "wyr": "ts-node src/cli-wyr.ts",
+    "story": "ts-node src/cli-story.ts",
+    "clean": "rm -rf output/images/* output/audio/* output/frames/* output/videos/* output/subtitles/*",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint .",
     "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",

@@ -51,7 +51,9 @@ export class OpenAITTSProvider implements ITTSProvider {
         const err = error as AxiosError;
         console.error(
           '❌ Failed to generate audio via OpenAI:',
-          err.response?.data ? JSON.parse(err.response.data.toString()) : err.message,
+          err.response?.data
+            ? JSON.parse(err.response.data.toString())
+            : err.message,
         );
       } else {
         console.error('❌ Unknown Error:', error);
