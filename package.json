@@ -1,0 +1,29 @@
+{
+  "name": "short-creator",
+  "version": "1.0.0",
+  "description": "> 한국어 Would You Rather 쇼츠를 자동으로 생성하는 시스템",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qlsjtmek2/short-creator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/qlsjtmek2/short-creator/issues"
+  },
+  "homepage": "https://github.com/qlsjtmek2/short-creator#readme",
+  "devDependencies": {
+    "@types/node": "^25.0.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
