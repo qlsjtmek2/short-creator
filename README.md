@@ -1,135 +1,109 @@
-# Would You Rather 쇼츠 자동 생성기
+# 🎬 Would You Rather 쇼츠 자동 생성기
 
-> 한국어 Would You Rather 쇼츠를 자동으로 생성하는 시스템
+**AI를 활용하여 밸런스 게임(Would You Rather) 쇼츠 영상을 자동으로 생성하는 도구입니다.**
+Gemini가 질문을 만들고, Pexels에서 이미지를 찾고, TTS로 음성을 입혀 60초 분량의 쇼츠 영상을 완성합니다.
 
-## 📋 프로젝트 개요
+## ✨ 주요 기능
 
-한국 20-30대를 타겟으로 하는 Would You Rather 쇼츠를 자동으로 생성하여 높은 조회수와 참여율을 달성하는 것을 목표로 합니다.
-
-### 핵심 기능
-
-- ✅ **질문 자동 생성** - ChatGPT API로 재미있는 현실적 질문 생성
-- ✅ **이미지 자동 소싱** - Pexels API로 무료 스톡 이미지 다운로드
-- ✅ **음성 합성** - 타입캐스트로 한국어 캐릭터 음성 (박창수/개나리)
-- ✅ **분할 화면 생성** - Canvas로 빨강 vs 파랑 대비 레이아웃
-- ✅ **영상 렌더링** - FFmpeg로 60초 1080x1920 쇼츠 생성
-
-## 🏗️ 기술 스택
-
-- **언어**: TypeScript, Node.js
-- **API**: OpenAI (ChatGPT), 타입캐스트 (TTS), Pexels (이미지)
-- **라이브러리**: Canvas (프레임 생성), FFmpeg (영상 렌더링)
-- **폰트**: Pretendard (한글 최적화)
-
-## 📊 예상 성과
-
-- **생성 시간**: 10개 영상 / 10분
-- **영상당 비용**: $0.12
-- **자동화율**: 95%
-
-## 📁 프로젝트 구조
-
-```
-short-creator/
-├── docs/
-│   └── plans/
-│       └── 2026-01-14-would-you-rather-shorts-design.md
-├── src/                    # 소스 코드 (구현 예정)
-├── lib/                    # 라이브러리 및 유틸리티
-├── output/                 # 생성된 영상 (gitignore)
-├── PROJECT_TODOLIST.md     # 개발 계획
-└── README.md
-```
-
-## 🚀 개발 상태
-
-**현재 상태**: 🟡 설계 완료, 구현 준비 중
-
-### 완료된 작업
-- ✅ 전체 시스템 설계
-- ✅ 인터페이스 정의
-- ✅ 개발 todolist 작성 (60개 작업)
-
-### 다음 작업
-- ⏳ 프로젝트 환경 설정
-- ⏳ 5개 핵심 모듈 구현
-- ⏳ 통합 및 테스트
-
-## 📝 문서
-
-- [설계 문서](docs/plans/2026-01-14-would-you-rather-shorts-design.md) - 전체 시스템 아키텍처 및 설계
-- [개발 Todolist](PROJECT_TODOLIST.md) - 상세 작업 계획 (13 Phase, 60개 작업)
-
-## 💡 핵심 설계 원칙
-
-### 인터페이스 기반 설계
-각 모듈은 표준 인터페이스로 분리되어 교체 가능:
-- `IQuestionGenerator` - 질문 생성
-- `IImageProvider` - 이미지 제공
-- `ITTSProvider` - 음성 합성
-- `IFrameComposer` - 프레임 생성
-- `IVideoRenderer` - 영상 렌더링
-
-### 의존성 최소화
-- 각 모듈은 독립적으로 개발 및 테스트 가능
-- 한 서비스를 다른 서비스로 교체 시 인터페이스만 맞추면 됨
-- 예: 타입캐스트 → ElevenLabs로 교체 가능
-
-## 🔧 설치 및 사용 (구현 예정)
-
-```bash
-# 설치
-npm install
-
-# API 키 설정
-cp .env.example .env
-# .env 파일에 API 키 입력
-
-# 영상 생성
-npm run generate 10
-```
-
-## 📊 비용 분석
-
-### 운영 비용 (월간, 300개 영상 기준)
-- ChatGPT API: $1.50 (~$0.005/영상)
-- 타입캐스트: $11/월 (20분 플랜)
-- Pexels: 무료
-- **총**: ~$12.50/월
-
-### 영상당 단가
-- $0.04/영상 (300개 기준)
-
-## 🎯 로드맵
-
-### Phase 1: MVP (3일)
-- 기본 영상 생성 기능 구현
-- 10개 테스트 영상 생성
-
-### Phase 2: 최적화 (1주)
-- 성능 최적화
-- 에러 처리 강화
-- 배치 생성 자동화
-
-### Phase 3: 확장 (1개월)
-- 다른 포맷 추가 (가상 대화, 충격 반전)
-- YouTube API 자동 업로드
-- 분석 대시보드
-
-## 📄 라이선스
-
-MIT License
-
-## 🤝 기여
-
-현재 개인 프로젝트입니다.
-
-## 📧 문의
-
-이슈 트래커를 통해 문의해주세요.
+*   **🤖 질문 자동 생성**: Google Gemini AI가 한국어 밸런스 게임 질문을 무한 생성합니다.
+*   **🖼️ 이미지 자동 소싱**: 질문 내용에 맞는 고화질 이미지를 Pexels에서 찾아옵니다.
+*   **🎙️ AI 음성 합성**: ElevenLabs, Typecast API를 지원하며, 키가 없으면 Mock(무음) 모드로 동작합니다.
+*   **🎨 동적 프레임 생성**: Canvas를 활용해 빨강/파랑 그라데이션 배경의 분할 화면을 만듭니다.
+*   **🎥 고속 렌더링**: FFmpeg를 사용하여 1080x1920(9:16) FHD 영상을 빠르게 합성합니다.
+*   **📦 배치 생성**: 한 번의 명령으로 10개, 100개의 영상을 연속 생성할 수 있습니다.
 
 ---
 
-**프로젝트 시작일**: 2026-01-14
-**개발자**: shinhuigon
-**상태**: 🟡 진행 중
+## 🚀 시작하기
+
+### 1. 필수 요구사항
+이 프로젝트를 실행하려면 다음 도구들이 설치되어 있어야 합니다.
+
+*   **Node.js** (v18 이상 권장)
+*   **FFmpeg** (영상 렌더링 필수)
+    *   macOS: `brew install ffmpeg`
+    *   Windows: [FFmpeg 다운로드](https://ffmpeg.org/download.html) 후 환경변수 등록
+
+### 2. 설치
+프로젝트를 클론하고 패키지를 설치합니다.
+
+```bash
+git clone https://github.com/qlsjtmek2/short-creator.git
+cd short-creator
+npm install
+```
+
+### 3. 환경 변수 설정
+`.env` 파일을 생성하고 API 키를 입력합니다.
+
+```bash
+cp .env.example .env
+```
+
+`.env` 파일 내용:
+```env
+# Google Gemini API (필수) - 질문 생성용
+GEMINI_API_KEY=your_gemini_api_key
+
+# Pexels API (필수) - 이미지 검색용
+PEXELS_API_KEY=your_pexels_api_key
+
+# ElevenLabs API (선택) - 고품질 AI 음성
+ELEVENLABS_API_KEY=your_elevenlabs_key
+ELEVENLABS_VOICE_ID=your_voice_id (옵션)
+
+# Typecast API (선택) - 한국어 특화 음성
+TYPECAST_API_KEY=your_typecast_key
+```
+
+*   **Gemini 키 발급**: [Google AI Studio](https://aistudio.google.com/)
+*   **Pexels 키 발급**: [Pexels API](https://www.pexels.com/api/)
+*   **ElevenLabs 키 발급**: [ElevenLabs](https://elevenlabs.io/)
+
+---
+
+## 🎮 사용 방법
+
+### 영상 생성 (기본)
+1개의 쇼츠 영상을 생성합니다. 결과물은 `output/videos/`에 저장됩니다.
+
+```bash
+npm start
+```
+
+### 배치 생성 (여러 개)
+`--count` 옵션을 사용하여 한 번에 여러 개의 영상을 생성합니다.
+
+```bash
+npm start -- --count 5
+```
+
+### 임시 파일 정리
+생성 과정에서 다운로드된 이미지, 오디오, 프레임 파일을 삭제합니다.
+
+```bash
+npm run clean
+```
+
+### 모듈별 테스트
+각 기능이 정상 동작하는지 개별적으로 테스트할 수 있습니다.
+
+```bash
+npm run test:generator  # Gemini 질문 생성 테스트
+npm run test:image      # Pexels 이미지 다운로드 테스트
+npm run test:frame      # Canvas 프레임 합성 테스트
+npm run test:video      # FFmpeg 영상 렌더링 테스트
+```
+
+---
+
+## 🛠️ 기술 스택
+
+*   **언어**: TypeScript, Node.js
+*   **AI 모델**: Google Gemini Pro/Flash
+*   **미디어 처리**: Canvas (이미지), FFmpeg (비디오)
+*   **TTS**: ElevenLabs, Typecast (지원 예정)
+*   **CI/CD**: GitHub Actions
+
+## 📝 라이선스
+MIT License
