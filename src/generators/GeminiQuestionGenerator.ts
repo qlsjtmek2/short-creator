@@ -35,10 +35,13 @@ export class GeminiQuestionGenerator implements IQuestionGenerator {
       
       응답 형식:
       다음 구조의 JSON 배열로 응답해줘. id는 생성하지 말고 텍스트 내용만 채워줘.
+      optionAKeyword와 optionBKeyword는 각 옵션에 어울리는 '이미지 검색용 영어 키워드'를 짧게(1~2단어) 작성해줘.
       [
         {
           "optionA": "선택지 A 내용",
-          "optionB": "선택지 B 내용"
+          "optionB": "선택지 B 내용",
+          "optionAKeyword": "English keyword for A",
+          "optionBKeyword": "English keyword for B"
         }
       ]
     `;
@@ -58,6 +61,8 @@ export class GeminiQuestionGenerator implements IQuestionGenerator {
         id: uuidv4(),
         optionA: item.optionA,
         optionB: item.optionB,
+        optionAKeyword: item.optionAKeyword || "people",
+        optionBKeyword: item.optionBKeyword || "people",
       }));
     } catch (error) {
       console.error("Failed to generate questions via Gemini:", error);

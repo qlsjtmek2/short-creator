@@ -2,6 +2,8 @@ export interface WouldYouRatherQuestion {
   id: string;
   optionA: string;
   optionB: string;
+  optionAKeyword: string;
+  optionBKeyword: string;
 }
 
 export interface GeneratedAsset {
