@@ -9,7 +9,10 @@
   "scripts": {
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:gemini": "ts-node scripts/test-apis/test-gemini.ts",
+    "test:pexels": "ts-node scripts/test-apis/test-pexels.ts",
+    "test:typecast": "ts-node scripts/test-apis/test-typecast.ts"
   },
   "repository": {
     "type": "git",
@@ -34,5 +37,9 @@
     "prettier": "^3.7.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.2"
   }
 }
