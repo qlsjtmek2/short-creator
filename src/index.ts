@@ -2,24 +2,25 @@ import * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { GeminiQuestionGenerator } from './generators/GeminiQuestionGenerator';
-import { PexelsImageProvider } from './providers/PexelsImageProvider';
-import { ElevenLabsTTSProvider } from './providers/ElevenLabsTTSProvider';
-import { TypecastTTSProvider } from './providers/TypecastTTSProvider';
-import { MockTTSProvider } from './providers/MockTTSProvider';
-import { CanvasFrameComposer } from './composers/CanvasFrameComposer';
-import { FFmpegVideoRenderer } from './renderers/FFmpegVideoRenderer';
-import { ShortsGenerator } from './ShortsGenerator';
-import * as path from 'path';
-import { ITTSProvider } from '../types/interfaces';
+import { PexelsImageProvider } from "./providers/PexelsImageProvider";
+import { ElevenLabsTTSProvider } from "./providers/ElevenLabsTTSProvider";
+import { TypecastTTSProvider } from "./providers/TypecastTTSProvider";
+import { OpenAITTSProvider } from "./providers/OpenAITTSProvider";
+import { MockTTSProvider } from "./providers/MockTTSProvider";
+import { CanvasFrameComposer } from "./composers/CanvasFrameComposer";
+import { FFmpegVideoRenderer } from "./renderers/FFmpegVideoRenderer";
+import { ShortsGenerator } from "./ShortsGenerator";
+import * as path from "path";
+import { ITTSProvider } from "../types/interfaces";
 
 dotenv.config();
 
 async function bootstrap() {
   const argv = await yargs(hideBin(process.argv))
-    .option('count', {
-      alias: 'c',
-      type: 'number',
-      description: 'Number of shorts to generate',
+    .option("count", {
+      alias: "c",
+      type: "number",
+      description: "Number of shorts to generate",
       default: 1,
     })
     .help()
@@ -29,24 +30,26 @@ async function bootstrap() {
   const PEXELS_KEY = process.env.PEXELS_API_KEY;
   const ELEVENLABS_KEY = process.env.ELEVENLABS_API_KEY;
   const TYPECAST_KEY = process.env.TYPECAST_API_KEY;
+  const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
   if (!GEMINI_KEY || !PEXELS_KEY) {
-    console.error(
-      '❌ Required API keys are missing in .env (GEMINI_API_KEY, PEXELS_API_KEY)',
-    );
+    console.error("❌ Required API keys are missing in .env (GEMINI_API_KEY, PEXELS_API_KEY)");
     process.exit(1);
   }
 
-  // TTS Provider 선택 (ElevenLabs > Typecast > Mock)
+  // TTS Provider 선택 (ElevenLabs > OpenAI > Typecast > Mock)
   let ttsProvider: ITTSProvider;
   if (ELEVENLABS_KEY) {
-    console.log('🎙️ Using ElevenLabs TTS Provider');
+    console.log("🎙️ Using ElevenLabs TTS Provider");
     ttsProvider = new ElevenLabsTTSProvider(ELEVENLABS_KEY);
+  } else if (OPENAI_KEY) {
+    console.log("🎙️ Using OpenAI TTS Provider");
+    ttsProvider = new OpenAITTSProvider(OPENAI_KEY);
   } else if (TYPECAST_KEY) {
-    console.log('🎙️ Using Typecast TTS Provider');
+    console.log("🎙️ Using Typecast TTS Provider");
     ttsProvider = new TypecastTTSProvider(TYPECAST_KEY);
   } else {
-    console.log('⚠️ No TTS API Key found. Using Mock TTS Provider.');
+    console.log("⚠️ No TTS API Key found. Using Mock TTS Provider.");
     ttsProvider = new MockTTSProvider();
   }
 
