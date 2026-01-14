@@ -133,13 +133,9 @@ export class StoryOrchestrator {
     console.log(`✅ Total duration: ${currentTime.toFixed(2)}s`);
 
     // 4. 자막 파일 생성
-    console.log('4️⃣ Generating subtitle file...');
-    const subtitleEvents: SubtitleEvent[] = sentencesWithTimestamps.map(
-      (s) => ({
-        start: s.startTime!,
-        end: s.endTime!,
-        text: s.text,
-      }),
+    console.log('4️⃣ Generating subtitle file with word-level chunking...');
+    const subtitleEvents: SubtitleEvent[] = sentencesWithTimestamps.flatMap(
+      (s) => this.splitSentenceIntoEvents(s),
     );
 
     const subtitlePath = path.join(
@@ -168,6 +164,68 @@ export class StoryOrchestrator {
 
     console.log(`✅ Story shorts created: ${finalVideoPath}\n`);
     return finalVideoPath;
+  }
+
+  /**
+   * 문장을 더 작은 단위(청크)로 나누어 자막 이벤트를 생성합니다.
+   * 영상의 템포를 빠르게 하기 위함입니다.
+   */
+  private splitSentenceIntoEvents(sentence: StorySentence): SubtitleEvent[] {
+    const text = sentence.text.trim();
+    const duration = sentence.endTime! - sentence.startTime!;
+
+    // 1. 단순 단어 단위 분할 (공백 기준)
+    const words = text.split(/\s+/);
+    
+    // 2. 청크 생성 (한 화면에 보여줄 단어 수)
+    // 짧은 문장은 통째로, 긴 문장은 2~3단어씩 끊어서
+    const chunks: string[] = [];
+    let currentChunk: string[] = [];
+    
+    // 문장 길이에 따라 청크 사이즈 동적 조절
+    // 아주 긴 문장은 2단어씩 빠르게, 짧은 문장은 3~4단어씩 여유있게
+    const wordsPerChunk = words.length > 10 ? 2 : 3;
+
+    for (const word of words) {
+      currentChunk.push(word);
+      
+      // 구두점(., ?, !)으로 끝나면 무조건 청크 분리
+      // 또는 설정된 단어 수에 도달하면 분리
+      if (
+        currentChunk.length >= wordsPerChunk || 
+        word.endsWith('.') || 
+        word.endsWith('?') || 
+        word.endsWith('!') ||
+        word.endsWith(',')
+      ) {
+        chunks.push(currentChunk.join(' '));
+        currentChunk = [];
+      }
+    }
+    
+    // 남은 단어 처리
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk.join(' '));
+    }
+
+    // 3. 시간 배분 (글자 수 비율에 따라)
+    const totalChars = text.replace(/\s/g, '').length; // 공백 제외 글자 수
+    let currentStartTime = sentence.startTime!;
+    
+    return chunks.map((chunkText) => {
+      const chunkChars = chunkText.replace(/\s/g, '').length;
+      // 비율대로 시간 할당하되, 최소 시간(0.5초) 보장 등은 하지 않음 (자연스러운 흐름 위해)
+      const chunkDuration = (chunkChars / totalChars) * duration;
+      
+      const event: SubtitleEvent = {
+        start: currentStartTime,
+        end: currentStartTime + chunkDuration,
+        text: chunkText,
+      };
+      
+      currentStartTime += chunkDuration;
+      return event;
+    });
   }
 
   /**

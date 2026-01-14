@@ -90,10 +90,10 @@
       "animation": {
         "popInDuration": 150,
         "scaleUpStart": 0,
-        "scaleUpEnd": 120,
+        "scaleUpEnd": 110,
         "scaleDownStart": 0,
-        "scaleDownEnd": 200,
-        "finalScale": 100
+        "scaleDownEnd": 0,
+        "finalScale": 120
       }
     },
     "kenBurns": {

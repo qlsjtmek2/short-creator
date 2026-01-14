@@ -245,8 +245,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       .map((event) => {
         // 텍스트 자동 줄바꿈 처리
         const wrappedText = this.wrapText(event.text, maxChars);
-        // 애니메이션 효과: Pop-in + Scale up/down
-        const animatedText = `{\\fscx${anim.scaleUpStart}\\fscy${anim.scaleUpStart}\\t(0,${anim.popInDuration},\\fscx${anim.scaleUpEnd}\\fscy${anim.scaleUpEnd})\\t(${anim.scaleDownStart},${anim.scaleDownEnd},\\fscx${anim.finalScale}\\fscy${anim.finalScale})}${wrappedText}`;
+        
+        // 이벤트 전체 길이를 ms 단위로 계산
+        const eventDurationMs = Math.floor((event.end - event.start) * 1000);
+        
+        // 애니메이션 효과: 
+        // 1. Pop-in: 0에서 popInDuration까지 (scaleUpStart -> scaleUpEnd)
+        // 2. Slow Zoom: popInDuration에서 끝까지 (scaleUpEnd -> finalScale)
+        const animatedText = `{\\fscx${anim.scaleUpStart}\\fscy${anim.scaleUpStart}\\t(0,${anim.popInDuration},\\fscx${anim.scaleUpEnd}\\fscy${anim.scaleUpEnd})\\t(${anim.popInDuration},${eventDurationMs},\\fscx${anim.finalScale}\\fscy${anim.finalScale})}${wrappedText}`;
+        
         const start = this.formatTime(event.start);
         const end = this.formatTime(event.end);
         return `Dialogue: 0,${start},${end},Default,,0,0,0,,${animatedText}`;
