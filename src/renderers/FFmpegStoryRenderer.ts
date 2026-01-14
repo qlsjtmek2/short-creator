@@ -1,6 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createCanvas, registerFont } from 'canvas';
 import { IStoryVideoRenderer } from '../../types/interfaces';
 import { StoryScriptWithAssets } from '../../types/common';
 import { getStoryConfig } from '../../config/shorts.config';
@@ -120,9 +121,26 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     return new Promise((resolve, reject) => {
       const command = ffmpeg();
 
-      // 이미지 입력 추가
+      // 이미지 입력 추가 (GIF 길이 제한 포함)
       script.sentences.forEach((s) => {
-        command.input(s.imagePath!);
+        const duration = s.duration || 3;
+        const isGif = s.imagePath?.toLowerCase().endsWith('.gif');
+
+        if (isGif) {
+          command.input(s.imagePath!).inputOptions([
+            '-stream_loop',
+            '-1', // Loop infinitely
+            '-t',
+            duration.toString(),
+          ]);
+        } else {
+          command.input(s.imagePath!).inputOptions([
+            '-loop',
+            '1', // 정적 이미지를 반복 가능하게
+            '-t',
+            duration.toString(), // 입력을 오디오 길이만큼만 읽기 (GIF 원본 길이 무시)
+          ]);
+        }
       });
 
       // 오디오 입력
@@ -311,6 +329,88 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
   }
 
   /**
+   * 제목에서 중요한 키워드를 자동으로 감지하여 마크업합니다.
+   * - 숫자가 포함된 단어 (예: "3가지", "10년")
+   * - 2-6글자의 한글 명사
+   * - 영문 단어
+   */
+  private autoHighlightKeywords(title: string): string {
+    // 기존 별표 마크업을 모두 제거 (Gemini가 추가한 것일 수 있음)
+    const cleanTitle = title.replace(/\*/g, '');
+
+    // 키워드 패턴 정의
+    const patterns = [
+      /\d+[가-힣]+/g, // 숫자+한글 (예: "3가지", "10년")
+      /[A-Za-z]+/g, // 영문 단어
+      /[가-힣]{2,6}/g, // 2-6글자 한글 명사
+    ];
+
+    // 키워드 후보 추출
+    const keywords = new Set<string>();
+    for (const pattern of patterns) {
+      const matches = cleanTitle.match(pattern);
+      if (matches) {
+        matches.forEach((m) => {
+          // 너무 짧거나 불용어는 제외
+          if (m.length >= 2 && !this.isStopWord(m)) {
+            keywords.add(m);
+          }
+        });
+      }
+    }
+
+    // 너무 많으면 앞의 2-3개만 선택
+    const keywordArray = Array.from(keywords);
+    const selectedKeywords = keywordArray.slice(0, 3);
+
+    // 제목에 마크업 추가
+    let markedTitle = cleanTitle;
+    for (const keyword of selectedKeywords) {
+      // 정규식 특수문자 이스케이프
+      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // 한글 키워드 매칭 (이미 별표로 둘러싸이지 않은 경우만)
+      // \b는 한글에서 작동하지 않으므로 제거
+      const regex = new RegExp(`(?<!\\*)${escapedKeyword}(?!\\*)`, 'g');
+      markedTitle = markedTitle.replace(regex, `*${keyword}*`);
+    }
+
+    return markedTitle;
+  }
+
+  /**
+   * 불용어인지 확인합니다.
+   */
+  private isStopWord(word: string): boolean {
+    const stopWords = [
+      '것',
+      '수',
+      '때',
+      '곳',
+      '등',
+      '및',
+      '또는',
+      '또한',
+      '하지만',
+      '그리고',
+      '그러나',
+      '에서',
+      '에게',
+      '으로',
+      '를',
+      '을',
+      '가',
+      '이',
+      '의',
+      '도',
+      '만',
+      '에',
+      '와',
+      '과',
+    ];
+    return stopWords.includes(word);
+  }
+
+  /**
    * 타이틀 텍스트를 파싱하여 세그먼트로 분할합니다.
    * *키워드* 형태로 마크업된 텍스트를 강조 세그먼트로 처리합니다.
    */
@@ -404,8 +504,11 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     const titleConfig = this.config.title;
     const canvas = this.config.canvas;
 
+    // 자동 키워드 강조 적용
+    const markedTitle = this.autoHighlightKeywords(title);
+
     // 타이틀 줄 분할
-    const lines = this.splitIntoLines(title, titleConfig.maxCharsPerLine);
+    const lines = this.splitIntoLines(markedTitle, titleConfig.maxCharsPerLine);
 
     // Y 위치 계산 (한 줄이면 설정값 사용, 두 줄이면 위로 올림)
     const isTwoLines = lines.length > 1;
@@ -420,10 +523,11 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       const segments = this.parseTitle(line);
       const yPosition = baseY + lineIndex * titleConfig.lineSpacing;
 
-      // 각 세그먼트의 X 위치를 계산하기 위해 전체 라인과 각 부분의 너비를 추정
-      const lineWidths = this.estimateTextWidths(
+      // 각 세그먼트의 X 위치를 계산하기 위해 실제 텍스트 너비 측정
+      const lineWidths = this.measureTextWidths(
         segments,
         titleConfig.fontSize,
+        fontFile,
       );
       const totalWidth = lineWidths.reduce((sum, w) => sum + w, 0);
       const startX = (canvas.width - totalWidth) / 2;
@@ -457,35 +561,47 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
   }
 
   /**
-   * 텍스트 너비를 추정합니다 (대략적인 계산).
-   * 정확한 측정을 위해서는 Canvas API를 사용해야 하지만,
-   * 여기서는 폰트 크기 기반으로 대략적으로 계산합니다.
+   * Canvas API를 사용하여 실제 텍스트 너비를 정확하게 측정합니다.
    */
-  private estimateTextWidths(
+  private measureTextWidths(
     segments: TitleSegment[],
     fontSize: number,
+    fontFile: string,
   ): number[] {
-    return segments.map((segment) => {
-      // 한글/한자: fontSize와 거의 동일한 너비
-      // 영문/숫자/기호: fontSize * 0.6 정도
-      let totalWidth = 0;
-      for (const char of segment.text) {
-        const code = char.charCodeAt(0);
-        if (code >= 0x3131 && code <= 0xd7a3) {
-          // 한글
-          totalWidth += fontSize;
-        } else if (code >= 0x4e00 && code <= 0x9fff) {
-          // 한자
-          totalWidth += fontSize;
-        } else if (char === ' ') {
-          // 공백
-          totalWidth += fontSize * 0.3;
-        } else {
-          // 영문/숫자/기호
-          totalWidth += fontSize * 0.6;
-        }
+    // 폰트 파일에서 폰트 패밀리 이름 추출
+    const fontFamily = this.extractFontFamily(fontFile);
+
+    // 커스텀 폰트 등록 (파일이 존재하는 경우)
+    if (fs.existsSync(fontFile)) {
+      try {
+        registerFont(fontFile, { family: fontFamily });
+      } catch (error) {
+        console.warn(
+          `Warning: Failed to register font ${fontFile}:`,
+          error instanceof Error ? error.message : 'Unknown error',
+        );
       }
-      return totalWidth;
+    }
+
+    // Canvas 생성 (크기는 중요하지 않음, 측정만 하므로)
+    const canvas = createCanvas(100, 100);
+    const ctx = canvas.getContext('2d');
+
+    // 폰트 설정 (bold weight 추가)
+    ctx.font = `bold ${fontSize}px "${fontFamily}"`;
+
+    return segments.map((segment) => {
+      const metrics = ctx.measureText(segment.text);
+      return metrics.width;
     });
+  }
+
+  /**
+   * 폰트 파일 경로에서 폰트 패밀리 이름을 추출합니다.
+   */
+  private extractFontFamily(fontFile: string): string {
+    const fileName = path.basename(fontFile, path.extname(fontFile));
+    // "Pretendard-ExtraBold" -> "Pretendard"
+    return fileName.split('-')[0];
   }
 }

@@ -56,13 +56,14 @@ export class StoryOrchestrator {
         );
 
         // 2-1. 이미지 다운로드
+        const downloadedImagePath = await this.imageProvider.downloadImage(
+          sentence.keyword,
+        );
+        const ext = path.extname(downloadedImagePath);
         const imagePath = path.join(
           outputDir,
           'images',
-          `story_${Date.now()}_${index}.jpg`,
-        );
-        const downloadedImagePath = await this.imageProvider.downloadImage(
-          sentence.keyword,
+          `story_${Date.now()}_${index}${ext}`,
         );
 
         // 이미지 파일을 지정된 경로로 복사
