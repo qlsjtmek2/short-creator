@@ -13,12 +13,14 @@ import {
   StorySentence,
   SubtitleEvent,
 } from '../types/common';
+import { getStoryConfig } from '../config/shorts.config';
 
 /**
  * 스토리 파이프라인 전용 오케스트레이터
  * Would You Rather와 독립적으로 스토리텔링 쇼츠를 생성합니다.
  */
 export class StoryOrchestrator {
+  private config = getStoryConfig();
   constructor(
     private storyGenerator: IStoryGenerator,
     private imageProvider: IImageProvider,
@@ -153,7 +155,7 @@ export class StoryOrchestrator {
       'videos',
       `story_${Date.now()}.mp4`,
     );
-    const bgmPath = path.join(process.cwd(), 'assets', 'music', 'bgm.mp3');
+    const bgmPath = this.config.audio.bgmPath;
 
     const finalVideoPath = await this.videoRenderer.render(
       scriptWithAssets,

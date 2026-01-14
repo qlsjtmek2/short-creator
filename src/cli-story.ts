@@ -4,6 +4,8 @@ import { hideBin } from 'yargs/helpers';
 import { GeminiStoryGenerator } from './generators/GeminiStoryGenerator';
 import { SubtitleGenerator } from './generators/SubtitleGenerator';
 import { PexelsImageProvider } from './providers/PexelsImageProvider';
+import { RedditMemeProvider } from './providers/RedditMemeProvider';
+import { ImgflipMemeProvider } from './providers/ImgflipMemeProvider';
 import { ElevenLabsTTSProvider } from './providers/ElevenLabsTTSProvider';
 import { TypecastTTSProvider } from './providers/TypecastTTSProvider';
 import { OpenAITTSProvider } from './providers/OpenAITTSProvider';
@@ -11,7 +13,7 @@ import { MockTTSProvider } from './providers/MockTTSProvider';
 import { FFmpegStoryRenderer } from './renderers/FFmpegStoryRenderer';
 import { StoryOrchestrator } from './StoryOrchestrator';
 import * as path from 'path';
-import { ITTSProvider } from '../types/interfaces';
+import { ITTSProvider, IImageProvider } from '../types/interfaces';
 
 dotenv.config();
 
@@ -29,6 +31,13 @@ async function bootstrap() {
       description: 'Number of story shorts to generate',
       default: 1,
     })
+    .option('image-provider', {
+      alias: 'i',
+      type: 'string',
+      description: 'Image provider (pexels, reddit, imgflip)',
+      default: 'pexels',
+      choices: ['pexels', 'reddit', 'imgflip'],
+    })
     .help()
     .parse();
 
@@ -37,12 +46,45 @@ async function bootstrap() {
   const ELEVENLABS_KEY = process.env.ELEVENLABS_API_KEY;
   const TYPECAST_KEY = process.env.TYPECAST_API_KEY;
   const OPENAI_KEY = process.env.OPENAI_API_KEY;
+  const IMGFLIP_USERNAME = process.env.IMGFLIP_USERNAME;
+  const IMGFLIP_PASSWORD = process.env.IMGFLIP_PASSWORD;
 
-  if (!GEMINI_KEY || !PEXELS_KEY) {
+  if (!GEMINI_KEY) {
+    console.error('❌ GEMINI_API_KEY is required in .env');
+    process.exit(1);
+  }
+
+  // Pexels를 사용할 때만 PEXELS_API_KEY 필요
+  if (argv.imageProvider === 'pexels' && !PEXELS_KEY) {
+    console.error('❌ PEXELS_API_KEY is required for pexels image provider');
+    process.exit(1);
+  }
+
+  // Imgflip을 사용할 때만 IMGFLIP 자격증명 필요
+  if (
+    argv.imageProvider === 'imgflip' &&
+    (!IMGFLIP_USERNAME || !IMGFLIP_PASSWORD)
+  ) {
     console.error(
-      '❌ Required API keys are missing in .env (GEMINI_API_KEY, PEXELS_API_KEY)',
+      '❌ IMGFLIP_USERNAME and IMGFLIP_PASSWORD are required for imgflip image provider',
     );
     process.exit(1);
+  }
+
+  // Image Provider 선택
+  let imageProvider: IImageProvider;
+  if (argv.imageProvider === 'reddit') {
+    console.log('🖼️ Using Reddit Meme Provider (random memes)');
+    imageProvider = new RedditMemeProvider();
+  } else if (argv.imageProvider === 'imgflip') {
+    console.log('🖼️ Using Imgflip Meme Provider (random meme templates)');
+    imageProvider = new ImgflipMemeProvider(
+      IMGFLIP_USERNAME!,
+      IMGFLIP_PASSWORD!,
+    );
+  } else {
+    console.log('🖼️ Using Pexels Image Provider (keyword-based)');
+    imageProvider = new PexelsImageProvider(PEXELS_KEY!);
   }
 
   // TTS Provider 선택 (ElevenLabs > OpenAI > Typecast > Mock)
@@ -64,7 +106,7 @@ async function bootstrap() {
   // DI (Dependency Injection)
   const storyOrchestrator = new StoryOrchestrator(
     new GeminiStoryGenerator(),
-    new PexelsImageProvider(PEXELS_KEY),
+    imageProvider,
     ttsProvider,
     new SubtitleGenerator(),
     new FFmpegStoryRenderer(),

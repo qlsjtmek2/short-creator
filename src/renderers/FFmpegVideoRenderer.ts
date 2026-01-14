@@ -1,8 +1,11 @@
 import ffmpeg from 'fluent-ffmpeg';
 import * as fs from 'fs';
 import { IVideoRenderer } from '../../types/interfaces';
+import { getWYRConfig } from '../../config/shorts.config';
 
 export class FFmpegVideoRenderer implements IVideoRenderer {
+  private config = getWYRConfig();
+
   async renderVideo(
     framePath: string,
     audioPath: string,
@@ -17,15 +20,15 @@ export class FFmpegVideoRenderer implements IVideoRenderer {
       const command = ffmpeg().input(framePath).loop().input(audioPath);
 
       // 배경음악 파일이 있으면 추가
-      const bgmPath = 'assets/music/bgm.mp3';
+      const bgmPath = this.config.audio.bgmPath;
       const hasBgm = fs.existsSync(bgmPath);
 
       if (hasBgm) {
         command.input(bgmPath);
-        // 오디오 믹싱 필터: TTS(0번 오디오)는 1.0 볼륨, BGM(1번 오디오)은 0.15 볼륨으로 믹싱
+        // 오디오 믹싱 필터: TTS + BGM
         command.complexFilter([
-          '[1:a]volume=1.0[v1]',
-          '[2:a]volume=0.15[v2]',
+          `[1:a]volume=${this.config.audio.ttsVolume}[v1]`,
+          `[2:a]volume=${this.config.audio.bgmVolume}[v2]`,
           '[v1][v2]amix=inputs=2:duration=first[aout]',
         ]);
         command.outputOptions('-map 0:v').outputOptions('-map [aout]');

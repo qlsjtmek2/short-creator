@@ -3,16 +3,26 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { IStoryVideoRenderer } from '../../types/interfaces';
 import { StoryScriptWithAssets } from '../../types/common';
+import { getStoryConfig } from '../../config/shorts.config';
+
+/**
+ * 타이틀 텍스트 세그먼트 (일반 텍스트 또는 강조 텍스트)
+ */
+interface TitleSegment {
+  text: string;
+  isHighlight: boolean;
+}
 
 /**
  * FFmpeg를 사용하여 스토리텔링 쇼츠를 렌더링합니다.
  * - 이미지 시퀀스 + Ken Burns Zoom-in 효과
- * - 상/하단 레터박스 (각 300px)
- * - 상단 타이틀 텍스트
+ * - 상/하단 레터박스
+ * - 상단 타이틀 텍스트 (자동 줄바꿈 + 키워드 강조)
  * - ASS 자막 오버레이
  * - 문장별 오디오 병합 + BGM 믹싱
  */
 export class FFmpegStoryRenderer implements IStoryVideoRenderer {
+  private config = getStoryConfig();
   /**
    * 스토리 스크립트를 영상으로 렌더링합니다.
    */
@@ -107,13 +117,6 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     outputPath: string,
     bgmPath?: string,
   ): Promise<void> {
-    // 타이틀 텍스트 파일 생성
-    const titleFilePath = path.join(
-      path.dirname(subtitlePath),
-      `title_${Date.now()}.txt`,
-    );
-    fs.writeFileSync(titleFilePath, script.title, 'utf-8');
-
     return new Promise((resolve, reject) => {
       const command = ffmpeg();
 
@@ -134,7 +137,6 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       const filterComplex = this.buildFilterComplex(
         script,
         subtitlePath,
-        titleFilePath,
         !!bgmPath && fs.existsSync(bgmPath),
       );
 
@@ -146,19 +148,19 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
           '-map',
           '[final_audio]',
           '-c:v',
-          'libx264',
+          this.config.rendering.videoCodec,
           '-preset',
-          'medium',
+          this.config.rendering.preset,
           '-crf',
-          '23',
+          this.config.rendering.crf.toString(),
           '-r',
-          '30',
+          this.config.kenBurns.fps.toString(),
           '-pix_fmt',
-          'yuv420p',
+          this.config.rendering.pixelFormat,
           '-c:a',
-          'aac',
+          this.config.rendering.audioCodec,
           '-b:a',
-          '192k',
+          this.config.rendering.audioBitrate,
         ])
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .output(outputPath) as any;
@@ -176,19 +178,11 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
         })
         .on('end', () => {
           process.stdout.write('\r');
-          // 타이틀 임시 파일 정리
-          if (fs.existsSync(titleFilePath)) {
-            fs.unlinkSync(titleFilePath);
-          }
           resolve();
         })
         .on('error', (err: Error, stdout?: string, stderr?: string) => {
           console.error('FFmpeg error:', err.message);
           console.error('FFmpeg stderr:', stderr);
-          // 타이틀 임시 파일 정리
-          if (fs.existsSync(titleFilePath)) {
-            fs.unlinkSync(titleFilePath);
-          }
           reject(new Error(`Video rendering failed: ${err.message}`));
         })
         .run();
@@ -200,33 +194,32 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
    * - 이미지 스케일링 + Ken Burns Zoom-in
    * - 이미지 시퀀스 concat
    * - 레터박스 추가
-   * - 타이틀 텍스트
+   * - 타이틀 텍스트 (자동 줄바꿈 + 키워드 강조)
    * - ASS 자막 오버레이
    */
   private buildFilterComplex(
     script: StoryScriptWithAssets,
     subtitlePath: string,
-    titleFilePath: string,
     hasBGM: boolean,
   ): string[] {
     const filters: string[] = [];
     const imageCount = script.sentences.length;
 
     // Step 1: 각 이미지 스케일링 + Ken Burns Zoom-in 효과
+    const canvas = this.config.canvas;
+    const kb = this.config.kenBurns;
     script.sentences.forEach((s, i) => {
       const duration = s.duration || 3;
-      const fps = 30;
-      const totalFrames = Math.floor(duration * fps);
+      const totalFrames = Math.floor(duration * kb.fps);
 
-      // 이미지를 1080x1920으로 스케일 + 크롭
+      // 이미지를 설정된 캔버스 크기로 스케일 + 크롭
       filters.push(
-        `[${i}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1[scaled${i}]`,
+        `[${i}:v]scale=${canvas.width}:${canvas.height}:force_original_aspect_ratio=increase,crop=${canvas.width}:${canvas.height},setsar=1[scaled${i}]`,
       );
 
-      // Ken Burns Zoom-in 효과 (1.0 → 1.1 배율로 서서히 확대)
-      // zoompan 필터: z='min(zoom+0.0001,1.1)' -> 매 프레임마다 0.0001씩 증가, 최대 1.1배
+      // Ken Burns Zoom-in 효과
       filters.push(
-        `[scaled${i}]zoompan=z='min(zoom+0.0001,1.1)':d=${totalFrames}:s=1080x1920:fps=${fps}[zoomed${i}]`,
+        `[scaled${i}]zoompan=z='min(zoom+${kb.zoomIncrement},${kb.endZoom})':d=${totalFrames}:s=${canvas.width}x${canvas.height}:fps=${kb.fps}[zoomed${i}]`,
       );
     });
 
@@ -236,19 +229,19 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       .join('');
     filters.push(`${concatInputs}concat=n=${imageCount}:v=1:a=0[concat_video]`);
 
-    // Step 3: 레터박스 추가 (상단 300px, 하단 300px 검은색)
+    // Step 3: 레터박스 추가
+    const lb = this.config.letterbox;
     filters.push(
-      `[concat_video]drawbox=x=0:y=0:w=1080:h=300:color=black:t=fill,drawbox=x=0:y=1620:w=1080:h=300:color=black:t=fill[with_letterbox]`,
+      `[concat_video]drawbox=x=0:y=0:w=${canvas.width}:h=${lb.top}:color=${lb.color}:t=fill,drawbox=x=0:y=${canvas.height - lb.bottom}:w=${canvas.width}:h=${lb.bottom}:color=${lb.color}:t=fill[with_letterbox]`,
     );
 
-    // Step 4: 타이틀 텍스트 추가 (상단 중앙)
-    const fontFile = this.getFontPath();
-    const titleFileEscaped = titleFilePath
-      .replace(/\\/g, '/')
-      .replace(/:/g, '\\:');
-    filters.push(
-      `[with_letterbox]drawtext=fontfile='${fontFile}':textfile='${titleFileEscaped}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=150:borderw=2:bordercolor=black[titled]`,
+    // Step 4: 타이틀 텍스트 추가 (자동 줄바꿈 + 키워드 강조)
+    const titleFilters = this.buildTitleFilters(
+      script.title,
+      'with_letterbox',
+      'titled',
     );
+    filters.push(...titleFilters);
 
     // Step 5: ASS 자막 오버레이
     const subtitlePathEscaped = subtitlePath
@@ -258,13 +251,16 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
 
     // Step 6: 오디오 믹싱 (TTS + BGM)
     const audioInputIndex = imageCount; // 이미지 다음 인덱스가 오디오
+    const audio = this.config.audio;
     if (hasBGM) {
       const bgmInputIndex = audioInputIndex + 1;
       filters.push(
-        `[${audioInputIndex}:a]volume=1.0[tts];[${bgmInputIndex}:a]volume=0.15,aloop=loop=-1:size=2e+09[bgm_loop];[tts][bgm_loop]amix=inputs=2:duration=first[final_audio]`,
+        `[${audioInputIndex}:a]volume=${audio.ttsVolume}[tts];[${bgmInputIndex}:a]volume=${audio.bgmVolume},aloop=loop=-1:size=2e+09[bgm_loop];[tts][bgm_loop]amix=inputs=2:duration=first[final_audio]`,
       );
     } else {
-      filters.push(`[${audioInputIndex}:a]volume=1.0[final_audio]`);
+      filters.push(
+        `[${audioInputIndex}:a]volume=${audio.ttsVolume}[final_audio]`,
+      );
     }
 
     return filters;
@@ -283,21 +279,19 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
 
   /**
    * 시스템 폰트 경로를 반환합니다.
-   * macOS: /System/Library/Fonts/Supplemental/Arial.ttf 또는 Pretendard
-   * Linux: /usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
+   * 설정 파일에 지정된 폰트를 우선 사용하고, 없으면 시스템 폰트로 폴백
    */
   private getFontPath(): string {
+    // 설정 파일에 지정된 폰트 경로 우선
+    const configuredFontPath = this.config.title.fontPath;
+    if (fs.existsSync(configuredFontPath)) {
+      return configuredFontPath;
+    }
+
     // macOS 기본 한글 폰트
     const appleSDGothicPath = '/System/Library/Fonts/AppleSDGothicNeo.ttc';
     if (fs.existsSync(appleSDGothicPath)) {
       return appleSDGothicPath;
-    }
-
-    // macOS Pretendard 폰트 경로 (설치되어 있다면)
-    const pretendardPath =
-      '/System/Library/Fonts/Supplemental/Pretendard-Bold.ttf';
-    if (fs.existsSync(pretendardPath)) {
-      return pretendardPath;
     }
 
     // Linux 한글 폰트
@@ -314,5 +308,184 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
 
     // 최종 폴백 (프로젝트 내 폰트)
     return path.join(process.cwd(), 'assets', 'fonts', 'Pretendard-Bold.ttf');
+  }
+
+  /**
+   * 타이틀 텍스트를 파싱하여 세그먼트로 분할합니다.
+   * *키워드* 형태로 마크업된 텍스트를 강조 세그먼트로 처리합니다.
+   */
+  private parseTitle(title: string): TitleSegment[] {
+    const segments: TitleSegment[] = [];
+    const regex = /\*([^*]+)\*/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(title)) !== null) {
+      // 강조 텍스트 이전의 일반 텍스트
+      if (match.index > lastIndex) {
+        const normalText = title.substring(lastIndex, match.index);
+        if (normalText) {
+          segments.push({ text: normalText, isHighlight: false });
+        }
+      }
+
+      // 강조 텍스트 (별표 제거)
+      segments.push({ text: match[1], isHighlight: true });
+      lastIndex = regex.lastIndex;
+    }
+
+    // 마지막 남은 일반 텍스트
+    if (lastIndex < title.length) {
+      const normalText = title.substring(lastIndex);
+      if (normalText) {
+        segments.push({ text: normalText, isHighlight: false });
+      }
+    }
+
+    return segments.length > 0
+      ? segments
+      : [{ text: title, isHighlight: false }];
+  }
+
+  /**
+   * 텍스트를 두 줄로 분할합니다.
+   * maxCharsPerLine을 초과하면 적절한 공백 위치에서 줄바꿈합니다.
+   */
+  private splitIntoLines(text: string, maxCharsPerLine: number): string[] {
+    // 마크업 제거한 순수 텍스트 길이 체크
+    const plainText = text.replace(/\*/g, '');
+    if (plainText.length <= maxCharsPerLine) {
+      return [text];
+    }
+
+    // 중간 지점 찾기
+    const midPoint = Math.floor(plainText.length / 2);
+
+    // 중간 지점 근처의 공백 찾기
+    let splitIndex = plainText.indexOf(' ', midPoint);
+    if (splitIndex === -1 || splitIndex > plainText.length * 0.7) {
+      // 공백이 없거나 너무 뒤에 있으면 앞쪽에서 찾기
+      splitIndex = plainText.lastIndexOf(' ', midPoint);
+    }
+    if (splitIndex === -1) {
+      // 공백이 아예 없으면 중간에서 강제 분할
+      splitIndex = midPoint;
+    }
+
+    // 원본 텍스트에서 마크업을 고려하여 분할 위치 찾기
+    let actualIndex = 0;
+    let plainIndex = 0;
+    while (plainIndex < splitIndex && actualIndex < text.length) {
+      if (text[actualIndex] === '*') {
+        actualIndex++;
+        continue;
+      }
+      plainIndex++;
+      actualIndex++;
+    }
+
+    const line1 = text.substring(0, actualIndex).trim();
+    const line2 = text.substring(actualIndex).trim();
+
+    return [line1, line2];
+  }
+
+  /**
+   * 타이틀 텍스트를 렌더링하기 위한 FFmpeg 필터를 생성합니다.
+   * Canvas API를 사용해 텍스트 너비를 측정하여 정확한 위치에 배치합니다.
+   */
+  private buildTitleFilters(
+    title: string,
+    inputLabel: string,
+    outputLabel: string,
+  ): string[] {
+    const filters: string[] = [];
+    const fontFile = this.getFontPath();
+    const titleConfig = this.config.title;
+    const canvas = this.config.canvas;
+
+    // 타이틀 줄 분할
+    const lines = this.splitIntoLines(title, titleConfig.maxCharsPerLine);
+
+    // Y 위치 계산 (한 줄이면 설정값 사용, 두 줄이면 위로 올림)
+    const isTwoLines = lines.length > 1;
+    const baseY = isTwoLines
+      ? titleConfig.y - titleConfig.lineSpacing / 2
+      : titleConfig.y;
+
+    let currentLabel = inputLabel;
+    let filterIndex = 0;
+
+    lines.forEach((line, lineIndex) => {
+      const segments = this.parseTitle(line);
+      const yPosition = baseY + lineIndex * titleConfig.lineSpacing;
+
+      // 각 세그먼트의 X 위치를 계산하기 위해 전체 라인과 각 부분의 너비를 추정
+      const lineWidths = this.estimateTextWidths(
+        segments,
+        titleConfig.fontSize,
+      );
+      const totalWidth = lineWidths.reduce((sum, w) => sum + w, 0);
+      const startX = (canvas.width - totalWidth) / 2;
+
+      let currentX = startX;
+
+      segments.forEach((segment, segmentIndex) => {
+        const isLastSegment = segmentIndex === segments.length - 1;
+        const nextLabel =
+          isLastSegment && lineIndex === lines.length - 1
+            ? outputLabel
+            : `title_temp${filterIndex}`;
+
+        const color = segment.isHighlight
+          ? titleConfig.highlightColor
+          : titleConfig.fontColor;
+
+        const escapedText = this.escapeFFmpegText(segment.text);
+
+        filters.push(
+          `[${currentLabel}]drawtext=fontfile='${fontFile}':text='${escapedText}':fontcolor=${color}:fontsize=${titleConfig.fontSize}:x=${Math.round(currentX)}:y=${yPosition}:borderw=${titleConfig.borderWidth}:bordercolor=${titleConfig.borderColor}[${nextLabel}]`,
+        );
+
+        currentX += lineWidths[segmentIndex];
+        currentLabel = nextLabel;
+        filterIndex++;
+      });
+    });
+
+    return filters;
+  }
+
+  /**
+   * 텍스트 너비를 추정합니다 (대략적인 계산).
+   * 정확한 측정을 위해서는 Canvas API를 사용해야 하지만,
+   * 여기서는 폰트 크기 기반으로 대략적으로 계산합니다.
+   */
+  private estimateTextWidths(
+    segments: TitleSegment[],
+    fontSize: number,
+  ): number[] {
+    return segments.map((segment) => {
+      // 한글/한자: fontSize와 거의 동일한 너비
+      // 영문/숫자/기호: fontSize * 0.6 정도
+      let totalWidth = 0;
+      for (const char of segment.text) {
+        const code = char.charCodeAt(0);
+        if (code >= 0x3131 && code <= 0xd7a3) {
+          // 한글
+          totalWidth += fontSize;
+        } else if (code >= 0x4e00 && code <= 0x9fff) {
+          // 한자
+          totalWidth += fontSize;
+        } else if (char === ' ') {
+          // 공백
+          totalWidth += fontSize * 0.3;
+        } else {
+          // 영문/숫자/기호
+          totalWidth += fontSize * 0.6;
+        }
+      }
+      return totalWidth;
+    });
   }
 }

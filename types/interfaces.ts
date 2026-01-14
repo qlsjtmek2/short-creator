@@ -26,6 +26,48 @@ export interface IImageProvider {
 }
 
 /**
+ * 밈 제공 모듈 인터페이스
+ * Imgflip, Reddit 등의 API를 사용하여 재미있는 밈/짤방을 제공합니다.
+ */
+export interface IMemeProvider {
+  /**
+   * 랜덤 밈을 가져와 로컬에 저장한 뒤 파일 경로를 반환합니다.
+   */
+  downloadRandomMeme(): Promise<{
+    path: string;
+    title: string;
+    source: string;
+  }>;
+
+  /**
+   * 키워드로 밈을 검색합니다 (선택적).
+   * @param keyword 검색할 키워드
+   */
+  searchMeme?(keyword: string): Promise<
+    Array<{
+      id: string;
+      name: string;
+      url: string;
+    }>
+  >;
+
+  /**
+   * 밈 템플릿에 텍스트를 추가하여 생성합니다 (선택적).
+   * @param templateId 밈 템플릿 ID
+   * @param topText 상단 텍스트
+   * @param bottomText 하단 텍스트
+   */
+  generateMeme?(
+    templateId: string,
+    topText: string,
+    bottomText: string,
+  ): Promise<{
+    path: string;
+    url: string;
+  }>;
+}
+
+/**
  * Phase 6: TTS 모듈 인터페이스
  * 타입캐스트 등의 API를 사용하여 텍스트를 음성으로 변환합니다.
  */

@@ -1,0 +1,119 @@
+{
+  "wouldYouRather": {
+    "canvas": {
+      "width": 1080,
+      "height": 1920
+    },
+    "colors": {
+      "optionA": {
+        "start": "#FF6B6B",
+        "end": "#EE5253"
+      },
+      "optionB": {
+        "start": "#48DBFB",
+        "end": "#2E86DE"
+      },
+      "text": "#FFFFFF",
+      "vsBadgeBackground": "#FFFFFF",
+      "vsBadgeBorder": "#000000",
+      "vsBadgeText": "#000000"
+    },
+    "font": {
+      "path": "assets/fonts/Pretendard-Bold.ttf",
+      "family": "Pretendard",
+      "size": 60,
+      "lineHeight": 80
+    },
+    "textShadow": {
+      "color": "rgba(0, 0, 0, 0.8)",
+      "blur": 10,
+      "offsetX": 4,
+      "offsetY": 4
+    },
+    "vsBadge": {
+      "radius": 80,
+      "borderWidth": 10,
+      "fontSize": 80
+    },
+    "layout": {
+      "imagePadding": 200,
+      "textMaxWidthPadding": 100,
+      "optionATextY": 0.25,
+      "optionBTextY": 0.75
+    },
+    "audio": {
+      "bgmPath": "assets/music/bgm.mp3",
+      "ttsVolume": 1.0,
+      "bgmVolume": 0.15
+    }
+  },
+  "storytelling": {
+    "canvas": {
+      "width": 1080,
+      "height": 1920
+    },
+    "letterbox": {
+      "top": 350,
+      "bottom": 350,
+      "color": "black"
+    },
+    "title": {
+      "fontPath": "assets/fonts/Pretendard-ExtraBold.ttf",
+      "fontSize": 100,
+      "fontColor": "white",
+      "highlightColor": "#FFD93D",
+      "y": 150,
+      "borderWidth": 2,
+      "borderColor": "black",
+      "maxCharsPerLine": 15,
+      "lineSpacing": 120
+    },
+    "subtitle": {
+      "fontPath": "assets/fonts/Pretendard-Bold.ttf",
+      "fontSize": 100,
+      "primaryColor": "&H00FFFFFF",
+      "outlineColor": "&H00000000",
+      "backColor": "&H00000000",
+      "outline": 8,
+      "shadow": 8,
+      "alignment": 2,
+      "marginV": 500,
+      "maxCharsPerLine": 15,
+      "wrapping": {
+        "enabled": true,
+        "marginL": 100,
+        "marginR": 100,
+        "safetyPadding": 60,
+        "maxScalePercent": 120,
+        "fallbackCharsPerLine": 13
+      },
+      "animation": {
+        "popInDuration": 100,
+        "scaleUpStart": 0,
+        "scaleUpEnd": 120,
+        "scaleDownStart": 200,
+        "scaleDownEnd": 400,
+        "finalScale": 100
+      }
+    },
+    "kenBurns": {
+      "startZoom": 1.0,
+      "endZoom": 1.2,
+      "zoomIncrement": 0.0001,
+      "fps": 30
+    },
+    "audio": {
+      "bgmPath": "assets/music/bgm2.mp3",
+      "ttsVolume": 1.0,
+      "bgmVolume": 0.10
+    },
+    "rendering": {
+      "videoCodec": "libx264",
+      "preset": "medium",
+      "crf": 23,
+      "pixelFormat": "yuv420p",
+      "audioCodec": "aac",
+      "audioBitrate": "192k"
+    }
+  }
+}

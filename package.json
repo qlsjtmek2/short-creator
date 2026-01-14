@@ -10,7 +10,7 @@
     "start": "npm run wyr",
     "wyr": "ts-node src/cli-wyr.ts",
     "story": "ts-node src/cli-story.ts",
-    "clean": "rm -rf output/images/* output/audio/* output/frames/* output/videos/* output/subtitles/*",
+    "clean": "rm -rf output/images/* output/memes/* output/audio/* output/frames/* output/videos/* output/subtitles/*",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint .",
     "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -21,6 +21,7 @@
     "test:image": "ts-node scripts/test-pexels-provider.ts",
     "test:frame": "ts-node scripts/test-frame-composer.ts",
     "test:video": "ts-node scripts/test-video-renderer.ts",
+    "test:meme": "ts-node scripts/test-meme.ts",
     "download:bgm": "ts-node scripts/download-bgm.ts"
   },
   "repository": {
@@ -55,6 +56,7 @@
     "axios": "^1.13.2",
     "canvas": "^3.2.1",
     "fluent-ffmpeg": "^2.1.3",
+    "strip-json-comments": "^5.0.3",
     "uuid": "^13.0.0",
     "yargs": "^18.0.0"
   }

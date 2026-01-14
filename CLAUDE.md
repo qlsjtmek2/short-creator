@@ -33,13 +33,22 @@ npm run wyr
 # Would You Rather 쇼츠 여러 개 생성 (배치)
 npm run wyr -- --count 5
 
-# 스토리텔링 쇼츠 1개 생성 (기본 주제)
+# 스토리텔링 쇼츠 1개 생성 (기본 주제, 기본은 Pexels 이미지)
 npm run story
 
 # 스토리텔링 쇼츠 커스텀 주제로 생성
 npm run story -- --topic "우주의 신비" --count 3
 
-# 임시 파일 정리 (output/ 하위의 모든 이미지, 오디오, 프레임, 영상, 자막 삭제)
+# Reddit 밈으로 쇼츠 생성 (재미있는 짤방 사용)
+npm run story -- --image-provider reddit
+
+# Imgflip 밈 템플릿으로 쇼츠 생성
+npm run story -- --image-provider imgflip
+
+# 모든 옵션 조합 예시
+npm run story -- --topic "역사 속 흥미로운 사실" --count 2 --image-provider reddit
+
+# 임시 파일 정리 (output/ 하위의 모든 이미지, 밈, 오디오, 프레임, 영상, 자막 삭제)
 npm run clean
 ```
 
@@ -66,6 +75,7 @@ npm run test:generator  # GeminiQuestionGenerator 동작 확인
 npm run test:image      # PexelsImageProvider 동작 확인
 npm run test:frame      # CanvasFrameComposer 동작 확인
 npm run test:video      # FFmpegVideoRenderer 동작 확인
+npm run test:meme       # 밈 Provider 동작 확인 (Reddit + Imgflip)
 ```
 
 ---
@@ -84,6 +94,8 @@ short-creator/
 │   │   └── SubtitleGenerator.ts         # ASS 자막 파일 생성
 │   ├── providers/                  # 외부 API 통합
 │   │   ├── PexelsImageProvider.ts       # 이미지 검색 및 다운로드
+│   │   ├── RedditMemeProvider.ts        # Reddit 밈 다운로드 (무료)
+│   │   ├── ImgflipMemeProvider.ts       # Imgflip 밈 생성 (무료)
 │   │   ├── ElevenLabsTTSProvider.ts     # ElevenLabs TTS
 │   │   ├── OpenAITTSProvider.ts         # OpenAI TTS
 │   │   ├── TypecastTTSProvider.ts       # Typecast TTS
@@ -97,13 +109,18 @@ short-creator/
 │       └── audio.ts                     # 오디오 유틸리티
 ├── types/
 │   ├── interfaces.ts               # 핵심 인터페이스 정의
-│   └── common.ts                   # 공통 타입 정의
+│   ├── common.ts                   # 공통 타입 정의
+│   └── config.ts                   # 설정 타입 정의
+├── config/
+│   ├── shorts.config.ts            # 중앙 설정 파일 (실제 사용)
+│   └── shorts.config.example.ts    # 설정 예시 파일
 ├── scripts/                        # 테스트 및 유틸리티 스크립트
 │   ├── test-apis/                  # API 연결 테스트
 │   ├── test-*.ts                   # 모듈별 단위 테스트
 │   └── download-bgm.ts             # BGM 다운로드
 └── output/                         # 생성된 에셋 저장소
     ├── images/                     # 다운로드된 이미지
+    ├── memes/                      # 다운로드된 밈/짤방
     ├── audio/                      # 생성된 TTS 오디오
     ├── frames/                     # Canvas 프레임
     └── videos/                     # 최종 영상 파일
@@ -115,6 +132,7 @@ short-creator/
 
 - **`IQuestionGenerator`**: 질문 생성 (Gemini)
 - **`IImageProvider`**: 이미지 다운로드 (Pexels)
+- **`IMemeProvider`**: 밈/짤방 다운로드 (Reddit/Imgflip)
 - **`ITTSProvider`**: 음성 합성 (ElevenLabs/OpenAI/Typecast/Mock)
 - **`IFrameComposer`**: 프레임 합성 (Canvas)
 - **`IVideoRenderer`**: 영상 렌더링 (FFmpeg)
@@ -149,6 +167,10 @@ ELEVENLABS_API_KEY=...  # ElevenLabs (최우선 TTS)
 ELEVENLABS_VOICE_ID=... # (선택) 커스텀 보이스 ID
 OPENAI_API_KEY=...      # OpenAI (2순위 TTS)
 TYPECAST_API_KEY=...    # Typecast (3순위 TTS)
+
+# 선택 (밈 생성 기능 사용 시)
+IMGFLIP_USERNAME=...    # Imgflip 계정 (https://imgflip.com/signup)
+IMGFLIP_PASSWORD=...    # Imgflip 비밀번호
 ```
 
 **TTS 폴백 로직** (`src/index.ts:40-54`):
@@ -156,6 +178,122 @@ TYPECAST_API_KEY=...    # Typecast (3순위 TTS)
 2. 없으면 OpenAI 키 존재 → OpenAI 사용
 3. 없으면 Typecast 키 존재 → Typecast 사용
 4. 모두 없으면 → MockTTSProvider (무음 파일 생성)
+
+---
+
+## 설정 파일 커스터마이징
+
+모든 시각적/오디오 설정은 **프로젝트 루트의 `shorts.config.json`** 파일에서 중앙 관리됩니다. 하드코딩된 값을 직접 수정하지 말고, 이 JSON 설정 파일을 통해 커스터마이징하세요.
+
+### 설정 파일 위치
+- **실제 설정 파일**: `shorts.config.json` (프로젝트 최상단)
+- **예시 파일**: `shorts.config.example.json` (프로젝트 최상단)
+- **타입 정의**: `types/config.ts`
+- **로더**: `config/shorts.config.ts` (JSON 파일을 읽어옴)
+
+### 주요 설정 항목
+
+#### Would You Rather 쇼츠 설정 (`wouldYouRather`)
+
+**캔버스 및 레이아웃**
+- `canvas.width`, `canvas.height`: 영상 해상도 (기본: 1080x1920)
+- `layout.imagePadding`: 이미지 영역 여백 (기본: 200px)
+- `layout.textMaxWidthPadding`: 텍스트 최대 너비 여백 (기본: 100px)
+- `layout.optionATextY`, `layout.optionBTextY`: 텍스트 Y 위치 비율 (기본: 0.25, 0.75)
+
+**색상**
+- `colors.optionA.start`, `colors.optionA.end`: 옵션 A 그라데이션 색상
+- `colors.optionB.start`, `colors.optionB.end`: 옵션 B 그라데이션 색상
+- `colors.text`: 텍스트 색상
+- `colors.vsBadgeBackground`, `colors.vsBadgeBorder`, `colors.vsBadgeText`: VS 배지 색상
+
+**폰트**
+- `font.path`: 폰트 파일 경로 (기본: `assets/fonts/Pretendard-Bold.ttf`)
+- `font.family`: 폰트 패밀리명 (기본: `Pretendard`)
+- `font.size`: 텍스트 크기 (기본: 60px)
+- `font.lineHeight`: 줄 간격 (기본: 80px)
+
+**텍스트 그림자**
+- `textShadow.color`, `textShadow.blur`, `textShadow.offsetX`, `textShadow.offsetY`
+
+**VS 배지**
+- `vsBadge.radius`: 배지 반지름 (기본: 80px)
+- `vsBadge.borderWidth`: 테두리 두께 (기본: 10px)
+- `vsBadge.fontSize`: "VS" 텍스트 크기 (기본: 80px)
+
+**오디오**
+- `audio.bgmPath`: BGM 파일 경로
+- `audio.ttsVolume`: TTS 볼륨 (0-1, 기본: 1.0)
+- `audio.bgmVolume`: BGM 볼륨 (0-1, 기본: 0.15)
+
+#### 스토리텔링 쇼츠 설정 (`storytelling`)
+
+**캔버스 및 레터박스**
+- `canvas.width`, `canvas.height`: 영상 해상도
+- `letterbox.top`, `letterbox.bottom`: 상/하단 레터박스 높이 (기본: 300px)
+- `letterbox.color`: 레터박스 색상 (기본: `black`)
+
+**타이틀 (상단 고정 제목)**
+- `title.fontPath`: FFmpeg drawtext용 폰트 경로
+- `title.fontSize`: 타이틀 크기 (기본: 48px)
+- `title.fontColor`: 타이틀 색상 (기본: `white`)
+- `title.y`: 상단에서의 Y 위치 (기본: 150px)
+- `title.borderWidth`, `title.borderColor`: 텍스트 테두리
+
+**자막 (ASS 파일)**
+- `subtitle.fontName`: 자막 폰트명 (기본: `Pretendard ExtraBold`)
+- `subtitle.fontSize`: 자막 크기 (기본: 60px)
+- `subtitle.primaryColor`, `subtitle.outlineColor`, `subtitle.backColor`: ASS 색상 형식 (&H00BBGGRR)
+- `subtitle.outline`, `subtitle.shadow`: 아웃라인 두께, 그림자 크기
+- `subtitle.alignment`: 정렬 (5=중앙)
+- `subtitle.marginV`: 하단 여백
+
+**자막 애니메이션**
+- `subtitle.animation.popInDuration`: 뿅 하고 나타나는 시간 (기본: 200ms)
+- `subtitle.animation.scaleUpStart`, `subtitle.animation.scaleUpEnd`: 시작/최대 배율 (기본: 0%, 120%)
+- `subtitle.animation.scaleDownStart`, `subtitle.animation.scaleDownEnd`: Scale down 타이밍 (기본: 200ms, 400ms)
+- `subtitle.animation.finalScale`: 최종 배율 (기본: 100%)
+
+**Ken Burns Zoom-in 효과**
+- `kenBurns.startZoom`, `kenBurns.endZoom`: 시작/끝 줌 배율 (기본: 1.0, 1.1)
+- `kenBurns.zoomIncrement`: 프레임당 줌 증가량 (기본: 0.0001)
+- `kenBurns.fps`: 프레임레이트 (기본: 30)
+
+**FFmpeg 렌더링**
+- `rendering.videoCodec`: 비디오 코덱 (기본: `libx264`)
+- `rendering.preset`: 인코딩 속도 (기본: `medium`)
+- `rendering.crf`: 화질 (0-51, 낮을수록 고화질, 기본: 23)
+- `rendering.pixelFormat`: 픽셀 포맷 (기본: `yuv420p`)
+- `rendering.audioCodec`, `rendering.audioBitrate`: 오디오 설정
+
+### 설정 파일 사용 방법
+
+1. **설정 파일 확인**: `config/shorts.config.ts` 파일을 엽니다.
+2. **값 수정**: 원하는 설정값을 변경합니다. (예: 폰트 크기를 60에서 70으로)
+3. **저장 및 실행**: 파일을 저장하고 `npm start` 또는 `npm run story`를 실행합니다.
+4. **결과 확인**: 변경된 설정이 영상에 반영됩니다.
+
+**예시: 자막 크기 변경**
+```typescript
+// config/shorts.config.ts
+storytelling: {
+  subtitle: {
+    fontSize: 70,  // 60 → 70으로 변경
+    // ... 나머지 설정
+  },
+}
+```
+
+**예시: BGM 볼륨 조절**
+```typescript
+// config/shorts.config.ts
+storytelling: {
+  audio: {
+    ttsVolume: 1.0,
+    bgmVolume: 0.10,  // 0.15 → 0.10으로 줄이기 (더 조용하게)
+  },
+}
+```
 
 ---
 
@@ -248,3 +386,164 @@ API 키가 없어도 시스템이 중단되지 않도록 MockTTSProvider를 두�
   - Ubuntu/Debian: `sudo apt install ffmpeg`
 - **Node.js Canvas 의존성**: `canvas` 패키지는 네이티브 바이너리를 포함하므로 설치 시 Python/C++ 컴파일러 필요
 - **출력 파일 관리**: `npm run clean`으로 임시 파일을 정리하지 않으면 디스크 용량이 빠르게 소진됨
+
+---
+
+## 밈 Provider 사용 가이드
+
+프로젝트에 **재미있는 짤방/밈** 제공 기능이 추가되었습니다. Reddit과 Imgflip 두 가지 API를 지원합니다.
+
+### 지원하는 Provider
+
+#### 1. **RedditMemeProvider** (추천: 즉시 사용 가능)
+
+**특징**:
+- ✅ 완전 무료 (API 키 불필요)
+- ✅ 인증 없이 즉시 사용 가능
+- ✅ Reddit의 r/memes, r/dankmemes, r/me_irl 등에서 실시간 밈 수집
+- ✅ NSFW 자동 필터링
+- ⚠️ Reddit ToS 적용 (상업적 사용 시 주의 필요)
+
+**사용 예시**:
+```typescript
+import { RedditMemeProvider } from './src/providers/RedditMemeProvider';
+
+const provider = new RedditMemeProvider();
+
+// 랜덤 밈 다운로드
+const meme = await provider.downloadRandomMeme();
+console.log(meme.path);   // output/memes/reddit_meme_*.jpg
+console.log(meme.title);  // 밈 제목
+console.log(meme.source); // r/memes by u/username (123 upvotes)
+
+// 특정 서브레딧에서 다운로드
+const wholesome = await provider.downloadRandomMeme('wholesomememes');
+```
+
+**API 문서**: [D3vd/Meme_Api](https://github.com/D3vd/Meme_Api)
+
+---
+
+#### 2. **ImgflipMemeProvider** (추천: 밈 생성 필요 시)
+
+**특징**:
+- ✅ 무료 (Imgflip 계정 필요)
+- ✅ 100+ 인기 밈 템플릿 제공
+- ✅ 텍스트 추가하여 커스텀 밈 생성 가능
+- ✅ 상업적 사용 가능
+- ⚠️ 계정 생성 필요 (https://imgflip.com/signup)
+
+**설정 방법**:
+1. Imgflip 계정 생성: https://imgflip.com/signup
+2. `.env` 파일에 추가:
+   ```bash
+   IMGFLIP_USERNAME=your_username
+   IMGFLIP_PASSWORD=your_password
+   ```
+
+**사용 예시**:
+```typescript
+import { ImgflipMemeProvider } from './src/providers/ImgflipMemeProvider';
+
+const provider = new ImgflipMemeProvider(
+  process.env.IMGFLIP_USERNAME!,
+  process.env.IMGFLIP_PASSWORD!
+);
+
+// 랜덤 밈 템플릿 다운로드
+const meme = await provider.downloadRandomMeme();
+
+// 밈 템플릿 목록 가져오기
+const templates = await provider.getMemeTemplates();
+console.log(templates[0].name); // "Drake Hotline Bling"
+
+// 키워드로 템플릿 검색
+const drakeTemplates = await provider.searchMeme('Drake');
+
+// 텍스트 추가하여 밈 생성
+const generated = await provider.generateMeme(
+  '181913649',  // Drake 템플릿 ID
+  'Using paid APIs',
+  'Using free meme APIs'
+);
+console.log(generated.path); // output/memes/imgflip_generated_*.jpg
+console.log(generated.url);  // https://i.imgflip.com/...
+```
+
+**API 문서**: [Imgflip API](https://imgflip.com/api)
+
+---
+
+### 테스트 실행
+
+```bash
+npm run test:meme
+```
+
+이 명령어는 다음을 테스트합니다:
+1. **Reddit Meme Provider** (항상 실행)
+   - 랜덤 밈 다운로드
+   - 특정 서브레딧에서 다운로드
+2. **Imgflip Meme Provider** (자격증명이 있을 때만)
+   - 밈 템플릿 목록 가져오기
+   - 랜덤 템플릿 다운로드
+   - 키워드 검색
+   - 텍스트 추가하여 밈 생성
+
+---
+
+### 사용 시나리오
+
+**시나리오 1: 랜덤 짤방 가져오기**
+```typescript
+// 가장 간단 - 인증 불필요
+const reddit = new RedditMemeProvider();
+const meme = await reddit.downloadRandomMeme();
+// → output/memes/reddit_meme_*.jpg
+```
+
+**시나리오 2: 특정 분위기의 밈**
+```typescript
+// Wholesome한 밈
+const wholesome = await reddit.downloadRandomMeme('wholesomememes');
+
+// Dank 밈
+const dank = await reddit.downloadRandomMeme('dankmemes');
+```
+
+**시나리오 3: 커스텀 밈 생성**
+```typescript
+// Imgflip으로 텍스트 추가
+const imgflip = new ImgflipMemeProvider(username, password);
+const templates = await imgflip.getMemeTemplates();
+const drakeId = templates.find(t => t.name.includes('Drake'))?.id;
+
+const customMeme = await imgflip.generateMeme(
+  drakeId!,
+  '기존 방식',
+  '새로운 방식'
+);
+```
+
+---
+
+### 주의사항
+
+1. **Reddit Meme Provider**
+   - Reddit API ToS 적용
+   - 서드파티 서비스(meme-api.com)를 통해 접근
+   - 상업적 사용 시 법적 리스크 있음
+   - 개인 프로젝트나 프로토타입용으로 권장
+
+2. **Imgflip Meme Provider**
+   - 무료 티어에서도 상업적 사용 가능
+   - 과도한 요청 시 throttling 가능성
+   - 프로덕션 환경에 권장
+
+3. **NSFW 콘텐츠**
+   - Reddit Provider는 NSFW 자동 필터링
+   - 그러나 완벽하지 않으므로 사용 전 확인 권장
+
+4. **저장 위치**
+   - 모든 밈은 `output/memes/` 디렉토리에 저장
+   - `npm run clean`으로 정리 가능
