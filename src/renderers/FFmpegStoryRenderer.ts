@@ -127,6 +127,7 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
         const isGif = s.imagePath?.toLowerCase().endsWith('.gif');
 
         if (isGif) {
+          // GIF: 무한 루프 + 시간 제한으로 동영상 스트림 생성
           command.input(s.imagePath!).inputOptions([
             '-stream_loop',
             '-1', // Loop infinitely
@@ -134,12 +135,9 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
             duration.toString(),
           ]);
         } else {
-          command.input(s.imagePath!).inputOptions([
-            '-loop',
-            '1', // 정적 이미지를 반복 가능하게
-            '-t',
-            duration.toString(), // 입력을 오디오 길이만큼만 읽기 (GIF 원본 길이 무시)
-          ]);
+          // 정적 이미지: 단일 프레임 입력 (zoompan 필터가 길이를 생성함)
+          // -loop 1을 쓰면 zoompan이 각 프레임마다 적용되어 길이가 폭발함 (30분 영상의 원인)
+          command.input(s.imagePath!);
         }
       });
 
@@ -209,7 +207,7 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
 
   /**
    * FFmpeg 복잡 필터 체인을 구성합니다.
-   * - 이미지 스케일링 + Ken Burns Zoom-in
+   * - 이미지 스케일링 + Ken Burns Zoom-in (정적 이미지만)
    * - 이미지 시퀀스 concat
    * - 레터박스 추가
    * - 타이틀 텍스트 (자동 줄바꿈 + 키워드 강조)
@@ -226,19 +224,29 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     // Step 1: 각 이미지 스케일링 + Ken Burns Zoom-in 효과
     const canvas = this.config.canvas;
     const kb = this.config.kenBurns;
+
     script.sentences.forEach((s, i) => {
       const duration = s.duration || 3;
       const totalFrames = Math.floor(duration * kb.fps);
+      const isGif = s.imagePath?.toLowerCase().endsWith('.gif');
 
-      // 이미지를 설정된 캔버스 크기로 스케일 + 크롭
-      filters.push(
-        `[${i}:v]scale=${canvas.width}:${canvas.height}:force_original_aspect_ratio=increase,crop=${canvas.width}:${canvas.height},setsar=1[scaled${i}]`,
-      );
+      if (isGif) {
+        // GIF: 스케일링만 적용 (zoompan 제외)
+        // 움직이는 GIF에 zoompan을 적용하면 프레임이 튀거나 정지됨
+        filters.push(
+          `[${i}:v]scale=${canvas.width}:${canvas.height}:force_original_aspect_ratio=increase,crop=${canvas.width}:${canvas.height},setsar=1[zoomed${i}]`,
+        );
+      } else {
+        // 정적 이미지: 스케일링 + Ken Burns Zoom-in
+        // 단일 프레임을 입력받아 totalFrames만큼 늘림 (d=totalFrames)
+        filters.push(
+          `[${i}:v]scale=${canvas.width}:${canvas.height}:force_original_aspect_ratio=increase,crop=${canvas.width}:${canvas.height},setsar=1[scaled${i}]`,
+        );
 
-      // Ken Burns Zoom-in 효과
-      filters.push(
-        `[scaled${i}]zoompan=z='min(zoom+${kb.zoomIncrement},${kb.endZoom})':d=${totalFrames}:s=${canvas.width}x${canvas.height}:fps=${kb.fps}[zoomed${i}]`,
-      );
+        filters.push(
+          `[scaled${i}]zoompan=z='min(zoom+${kb.zoomIncrement},${kb.endZoom})':d=${totalFrames}:s=${canvas.width}x${canvas.height}:fps=${kb.fps}[zoomed${i}]`,
+        );
+      }
     });
 
     // Step 2: 이미지 시퀀스 concat (Fade 전환 효과는 생략, 단순 concat)

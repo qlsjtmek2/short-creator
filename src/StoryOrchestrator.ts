@@ -56,6 +56,7 @@ export class StoryOrchestrator {
         );
 
         // 2-1. 이미지 다운로드
+        const uniqueId = `${Date.now()}_${process.hrtime()[1]}_${Math.random().toString(36).substring(7)}`;
         const downloadedImagePath = await this.imageProvider.downloadImage(
           sentence.keyword,
         );
@@ -63,7 +64,7 @@ export class StoryOrchestrator {
         const imagePath = path.join(
           outputDir,
           'images',
-          `story_${Date.now()}_${index}${ext}`,
+          `story_${uniqueId}_${index}${ext}`,
         );
 
         // 이미지 파일을 지정된 경로로 복사
@@ -77,7 +78,7 @@ export class StoryOrchestrator {
         const audioPath = path.join(
           outputDir,
           'audio',
-          `story_${Date.now()}_${index}.mp3`,
+          `story_${uniqueId}_${index}.mp3`,
         );
         const generatedAudioPath = await this.ttsProvider.generateAudio(
           sentence.text,
