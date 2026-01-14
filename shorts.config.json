@@ -88,7 +88,7 @@
         "fallbackCharsPerLine": 13
       },
       "animation": {
-        "popInDuration": 150,
+        "popInDuration": 100,
         "scaleUpStart": 0,
         "scaleUpEnd": 110,
         "scaleDownStart": 0,

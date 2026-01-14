@@ -582,13 +582,13 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     fontSize: number,
     fontFile: string,
   ): number[] {
-    // 폰트 파일에서 폰트 패밀리 이름 추출
-    const fontFamily = this.extractFontFamily(fontFile);
+    // 폰트 파일별로 고유한 패밀리 이름 생성 (캐싱 효과 및 충돌 방지)
+    const uniqueFamily = `Font_${path.basename(fontFile, path.extname(fontFile))}`;
 
     // 커스텀 폰트 등록 (파일이 존재하는 경우)
     if (fs.existsSync(fontFile)) {
       try {
-        registerFont(fontFile, { family: fontFamily });
+        registerFont(fontFile, { family: uniqueFamily });
       } catch (error) {
         console.warn(
           `Warning: Failed to register font ${fontFile}:`,
@@ -601,11 +601,15 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     const canvas = createCanvas(100, 100);
     const ctx = canvas.getContext('2d');
 
-    // 폰트 설정 (bold weight 추가)
-    ctx.font = `bold ${fontSize}px "${fontFamily}"`;
+    // 폰트 설정
+    // 주의: 이미 ExtraBold 등의 폰트 파일을 사용 중이므로 'bold'를 추가하면 
+    // 실제 FFmpeg 렌더링보다 더 넓게 측정될 수 있음 (중복 적용 방지)
+    ctx.font = `${fontSize}px "${uniqueFamily}"`;
 
     return segments.map((segment) => {
       const metrics = ctx.measureText(segment.text);
+      // 미세한 오차 보정을 위해 약간의 여유값(1%)을 줄 수 있으나, 
+      // 일단 정확한 값을 반환하고 관찰
       return metrics.width;
     });
   }
