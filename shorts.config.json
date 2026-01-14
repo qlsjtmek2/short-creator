@@ -61,7 +61,7 @@
       "fontPath": "assets/fonts/Pretendard-ExtraBold.ttf",
       "fontSize": 100,
       "fontColor": "white",
-      "highlightColor": "#FFD93D",
+      "highlightColor": "#FFDB58",
       "y": 150,
       "borderWidth": 2,
       "borderColor": "black",
@@ -75,7 +75,7 @@
       "outlineColor": "&H00000000",
       "backColor": "&H00000000",
       "outline": 8,
-      "shadow": 8,
+      "shadow": 4,
       "alignment": 2,
       "marginV": 500,
       "maxCharsPerLine": 15,
@@ -83,16 +83,16 @@
         "enabled": true,
         "marginL": 100,
         "marginR": 100,
-        "safetyPadding": 60,
+        "safetyPadding": 40,
         "maxScalePercent": 120,
         "fallbackCharsPerLine": 13
       },
       "animation": {
-        "popInDuration": 100,
+        "popInDuration": 150,
         "scaleUpStart": 0,
         "scaleUpEnd": 120,
-        "scaleDownStart": 200,
-        "scaleDownEnd": 400,
+        "scaleDownStart": 0,
+        "scaleDownEnd": 200,
         "finalScale": 100
       }
     },

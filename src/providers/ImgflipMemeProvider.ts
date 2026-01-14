@@ -21,6 +21,8 @@ export class ImgflipMemeProvider implements IMemeProvider, IImageProvider {
     name: string;
     url: string;
   }> | null = null;
+  private usedTemplateIds: Set<string> = new Set(); // 중복 추적
+  private maxRetries = 10; // 최대 재시도 횟수
 
   constructor(username: string, password: string) {
     this.username = username;
@@ -90,41 +92,63 @@ export class ImgflipMemeProvider implements IMemeProvider, IImageProvider {
     title: string;
     source: string;
   }> {
-    try {
-      console.log('  🎲 Fetching random meme template from Imgflip...');
+    let retries = 0;
 
-      const templates = await this.getMemeTemplates();
-      const randomTemplate =
-        templates[Math.floor(Math.random() * templates.length)];
+    while (retries < this.maxRetries) {
+      try {
+        console.log(
+          `  🎲 Fetching random meme template from Imgflip (attempt ${retries + 1}/${this.maxRetries})...`,
+        );
 
-      console.log(`  ✓ Selected: "${randomTemplate.name}"`);
+        const templates = await this.getMemeTemplates();
+        const randomTemplate =
+          templates[Math.floor(Math.random() * templates.length)];
 
-      // 이미지 다운로드
-      const imageResponse = await fetch(randomTemplate.url);
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to download image: ${imageResponse.status}`);
+        // 중복 체크
+        if (this.usedTemplateIds.has(randomTemplate.id)) {
+          console.log(
+            `  ⚠️  Duplicate template detected: "${randomTemplate.name}", fetching another...`,
+          );
+          retries++;
+          continue;
+        }
+
+        console.log(`  ✓ Selected: "${randomTemplate.name}"`);
+
+        // 이미지 다운로드
+        const imageResponse = await fetch(randomTemplate.url);
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to download image: ${imageResponse.status}`);
+        }
+
+        const buffer = Buffer.from(await imageResponse.arrayBuffer());
+
+        // 파일 저장
+        const filename = `imgflip_${randomTemplate.id}_${Date.now()}_${retries}.jpg`;
+        const filepath = path.join(this.outputDir, filename);
+        fs.writeFileSync(filepath, buffer);
+
+        // 사용된 템플릿 ID 기록
+        this.usedTemplateIds.add(randomTemplate.id);
+
+        console.log(`  ✓ Meme saved: ${filename}`);
+
+        return {
+          path: filepath,
+          title: randomTemplate.name,
+          source: `Imgflip (Template ID: ${randomTemplate.id})`,
+        };
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Imgflip download failed: ${error.message}`);
+        }
+        throw error;
       }
-
-      const buffer = Buffer.from(await imageResponse.arrayBuffer());
-
-      // 파일 저장
-      const filename = `imgflip_${randomTemplate.id}_${Date.now()}.jpg`;
-      const filepath = path.join(this.outputDir, filename);
-      fs.writeFileSync(filepath, buffer);
-
-      console.log(`  ✓ Meme saved: ${filename}`);
-
-      return {
-        path: filepath,
-        title: randomTemplate.name,
-        source: `Imgflip (Template ID: ${randomTemplate.id})`,
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Imgflip download failed: ${error.message}`);
-      }
-      throw error;
     }
+
+    throw new Error(
+      `Failed to fetch unique template after ${this.maxRetries} attempts. Consider using a different image provider.`,
+    );
   }
 
   /**
@@ -237,5 +261,13 @@ export class ImgflipMemeProvider implements IMemeProvider, IImageProvider {
       `  ℹ️  Keyword "${keyword}" ignored - using random meme template instead`,
     );
     return result.path;
+  }
+
+  /**
+   * 중복 추적을 초기화합니다. (새로운 쇼츠 생성 시 호출)
+   */
+  resetUsedMemes(): void {
+    this.usedTemplateIds.clear();
+    console.log('  🔄 Reset used meme templates tracking');
   }
 }

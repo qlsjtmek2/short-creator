@@ -391,9 +391,64 @@ API 키가 없어도 시스템이 중단되지 않도록 MockTTSProvider를 두�
 
 ## 밈 Provider 사용 가이드
 
-프로젝트에 **재미있는 짤방/밈** 제공 기능이 추가되었습니다. Reddit과 Imgflip 두 가지 API를 지원합니다.
+프로젝트에 **재미있는 짤방/밈/GIF** 제공 기능이 추가되었습니다. Reddit, Imgflip, KLIPY 세 가지 API를 지원합니다.
 
 ### 지원하는 Provider
+
+#### 🆕 0. **KlipyGIFProvider** (추천: 키워드 기반 GIF 검색)
+
+**특징**:
+- ✅ **완전 무료** (평생 무료 API 제공)
+- ✅ **키워드 기반 GIF 검색** (Tenor API 대체)
+- ✅ **무제한 API 호출** (프로덕션 키 승인 후)
+- ✅ 테스트 키: 분당 100 호출 (즉시 사용 가능)
+- ✅ GIF, 스티커, 밈, 클립(10초 영상) 제공
+- ✅ Tenor 호환 API (URL만 교체하면 마이그레이션 완료)
+- ⚠️ NSFW 필터링 메타데이터 제한적 (contentfilter=high 사용 권장)
+
+**배경**:
+- Google이 Tenor API를 2026년 6월 30일 완전 종료
+- Giphy API는 2025년 유료 전환 (연간 $9,000)
+- KLIPY는 광고 수익 기반 무료 모델로 대안 제공
+- Canva, Figma, Microsoft Outlook 등 대형 플랫폼 사용 중
+
+**API 키 발급**:
+1. [docs.klipy.com](https://docs.klipy.com/) 접속
+2. 테스트 키로 개발 시작 (분당 100 호출, 즉시 발급)
+3. Publisher Admin Panel에서 프로덕션 키 신청 (무제한, 승인 필요)
+
+**사용 예시**:
+```bash
+# 키워드 기반 GIF 검색으로 스토리 생성
+npm run story -- --image-provider klipy --topic "고양이 웃긴짤"
+```
+
+```typescript
+import { KlipyGIFProvider } from './src/providers/KlipyGIFProvider';
+
+const provider = new KlipyGIFProvider(process.env.KLIPY_API_KEY!);
+
+// 키워드로 GIF 검색 및 다운로드
+const gifPath = await provider.downloadImage('funny cat');
+console.log(gifPath); // output/memes/klipy_*.gif
+```
+
+**환경 변수**:
+```bash
+# .env
+KLIPY_API_KEY=your_klipy_api_key_here
+```
+
+**API 문서**:
+- [KLIPY API Docs](https://docs.klipy.com/)
+- [GitHub Repository](https://github.com/KLIPY-com/Klipy-GIF-API)
+
+**주의사항**:
+- NSFW 콘텐츠 필터링이 메타데이터 수준에서 제한적 (API에서 `contentfilter=high` 사용)
+- 신생 서비스이므로 장기 안정성 검증 필요
+- 광고 삽입 정책이 일부 사용 사례에는 부적합할 수 있음
+
+---
 
 #### 1. **RedditMemeProvider** (추천: 즉시 사용 가능)
 

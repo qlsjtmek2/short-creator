@@ -6,6 +6,7 @@ import { SubtitleGenerator } from './generators/SubtitleGenerator';
 import { PexelsImageProvider } from './providers/PexelsImageProvider';
 import { RedditMemeProvider } from './providers/RedditMemeProvider';
 import { ImgflipMemeProvider } from './providers/ImgflipMemeProvider';
+import { KlipyGIFProvider } from './providers/KlipyGIFProvider';
 import { ElevenLabsTTSProvider } from './providers/ElevenLabsTTSProvider';
 import { TypecastTTSProvider } from './providers/TypecastTTSProvider';
 import { OpenAITTSProvider } from './providers/OpenAITTSProvider';
@@ -34,15 +35,16 @@ async function bootstrap() {
     .option('image-provider', {
       alias: 'i',
       type: 'string',
-      description: 'Image provider (pexels, reddit, imgflip)',
+      description: 'Image provider (pexels, reddit, imgflip, klipy)',
       default: 'pexels',
-      choices: ['pexels', 'reddit', 'imgflip'],
+      choices: ['pexels', 'reddit', 'imgflip', 'klipy'],
     })
     .help()
     .parse();
 
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
   const PEXELS_KEY = process.env.PEXELS_API_KEY;
+  const KLIPY_KEY = process.env.KLIPY_API_KEY;
   const ELEVENLABS_KEY = process.env.ELEVENLABS_API_KEY;
   const TYPECAST_KEY = process.env.TYPECAST_API_KEY;
   const OPENAI_KEY = process.env.OPENAI_API_KEY;
@@ -71,10 +73,16 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  // KLIPY를 사용할 때만 KLIPY_API_KEY 필요
+  if (argv.imageProvider === 'klipy' && !KLIPY_KEY) {
+    console.error('❌ KLIPY_API_KEY is required for klipy image provider');
+    process.exit(1);
+  }
+
   // Image Provider 선택
   let imageProvider: IImageProvider;
   if (argv.imageProvider === 'reddit') {
-    console.log('🖼️ Using Reddit Meme Provider (random memes)');
+    console.log('🖼️ Using Reddit Meme Provider (keyword→subreddit mapping)');
     imageProvider = new RedditMemeProvider();
   } else if (argv.imageProvider === 'imgflip') {
     console.log('🖼️ Using Imgflip Meme Provider (random meme templates)');
@@ -82,6 +90,9 @@ async function bootstrap() {
       IMGFLIP_USERNAME!,
       IMGFLIP_PASSWORD!,
     );
+  } else if (argv.imageProvider === 'klipy') {
+    console.log('🖼️ Using KLIPY GIF Provider (keyword-based, free forever)');
+    imageProvider = new KlipyGIFProvider(KLIPY_KEY!);
   } else {
     console.log('🖼️ Using Pexels Image Provider (keyword-based)');
     imageProvider = new PexelsImageProvider(PEXELS_KEY!);

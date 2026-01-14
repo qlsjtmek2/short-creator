@@ -114,12 +114,136 @@
 - [x] StoryOrchestrator로 독립 파이프라인 분리
 - [x] CLI 인터페이스 구현 (npm run story)
 
+---
+
+## 🎯 Phase 16: 레딧 짤방 문제 해결 (2시간 25분) - [진행 중 🔄]
+
+> **목표**: Reddit 밈 사용 시 발생하는 문제 해결 (영상 길이, 중복, 키워드 매칭)
+> **생성일**: 2026-01-15
+
+### 문제 분석
+1. **영상이 6분+로 길어짐** ⭐ 최우선
+   - 원인: GIF 원본 애니메이션 길이가 TTS 길이를 무시
+   - 해결: FFmpeg 입력에 `-loop 1` 및 `-t <duration>` 옵션 추가
+2. **똑같은 짤이 반복됨**
+   - 원인: 중복 추적 메커니즘 없음
+   - 해결: `usedMemeUrls` Set으로 세션별 중복 방지
+3. **짤이 적재적소로 안 찾아짐**
+   - 원인: Reddit API가 키워드 검색 미지원 (랜덤만 제공)
+   - 해결: 키워드→서브레딧 매핑 + Tenor API 통합
+
+---
+
+### Phase 16-1: GIF 길이 제한 (15분) ⭐ 최우선
+- [ ] `src/renderers/FFmpegStoryRenderer.ts` 파일 읽기
+- [ ] 이미지 입력 로직 찾기 (Line 124-127)
+- [ ] `-loop 1` 옵션 추가하여 정적 이미지 반복 가능하게
+- [ ] `-t <duration>` 옵션 추가하여 GIF 원본 길이 무시
+- [ ] 변경사항 저장
+- [ ] 테스트: Reddit 밈으로 스토리 생성 (`npm run story -- --image-provider reddit`)
+- [ ] 영상 길이가 60초 이내인지 확인
+
+**예상 효과**:
+- GIF가 30초여도 TTS가 3초면 3초만 사용
+- 총 영상 길이 = TTS 길이 합 (정확히 제어됨)
+
+---
+
+### Phase 16-2: 중복 밈 방지 (30분)
+
+#### RedditMemeProvider.ts 수정
+- [ ] `src/providers/RedditMemeProvider.ts` 파일 읽기
+- [ ] 클래스 필드 추가: `usedMemeUrls: Set<string>`, `maxRetries = 10`
+- [ ] `downloadRandomMeme()` 메서드를 while 루프로 변경
+- [ ] NSFW 필터링 후 중복 체크 로직 추가
+- [ ] 다운로드 성공 시 `usedMemeUrls.add(meme.url)` 추가
+- [ ] 최대 재시도 초과 시 에러 처리
+- [ ] `resetUsedMemes()` 메서드 추가
+
+#### ImgflipMemeProvider.ts 수정
+- [ ] `src/providers/ImgflipMemeProvider.ts` 파일 읽기
+- [ ] 동일한 중복 방지 로직 적용 (`usedTemplateIds: Set<string>`)
+- [ ] 테스트: 여러 개 생성 (`npm run story -- --image-provider reddit --count 3`)
+- [ ] 중복 없이 고유한 밈이 사용되는지 확인
+
+---
+
+### Phase 16-3: 키워드→서브레딧 매핑 (40분)
+
+- [ ] `src/providers/RedditMemeProvider.ts`에 매핑 테이블 추가
+  ```typescript
+  keywordToSubredditMap: {
+    science: ['science', 'Damnthatsinteresting'],
+    game: ['gaming', 'gamingmemes'],
+    food: ['food', 'foodporn'],
+    cat: ['catmemes', 'cats'],
+    default: ['memes', 'dankmemes']
+  }
+  ```
+- [ ] `downloadImage(keyword)` 메서드에 매핑 로직 구현
+- [ ] 키워드 소문자 변환 및 부분 매칭
+- [ ] 매칭 실패 시 기본 서브레딧 사용
+- [ ] 테스트: 다양한 키워드로 서브레딧 매핑 확인
+  - `npm run story -- --image-provider reddit --topic "우주의 신비"`
+  - `npm run story -- --image-provider reddit --topic "게임의 역사"`
+
+---
+
+### Phase 16-4: Tenor GIF API 통합 (60분)
+
+#### TenorMemeProvider 생성
+- [ ] `src/providers/TenorMemeProvider.ts` 파일 생성
+- [ ] `IImageProvider` 인터페이스 구현
+- [ ] Tenor Search API 호출 로직 작성
+- [ ] 키워드 기반 GIF 검색 구현
+- [ ] 중복 방지 로직 추가 (`usedGifUrls: Set<string>`)
+- [ ] GIF 다운로드 및 저장
+- [ ] `resetUsedMemes()` 메서드 추가
+
+#### CLI 통합
+- [ ] `src/cli-story.ts` 파일 읽기
+- [ ] `--image-provider` 옵션에 'tenor' 추가
+- [ ] Tenor Provider 선택 로직 추가
+- [ ] TENOR_API_KEY 검증 로직 추가
+
+#### 설정 및 문서화
+- [ ] `.env.example`에 `TENOR_API_KEY=...` 추가
+- [ ] `.env`에 실제 API 키 추가 (https://tenor.com/developer/keyregistration)
+- [ ] `CLAUDE.md` 또는 `README.md`에 Tenor API 사용법 추가
+
+---
+
+### Phase 16-5: 통합 테스트 및 검증
+
+#### GIF 길이 검증
+- [ ] Reddit 밈으로 스토리 생성
+- [ ] 영상 길이가 60초 이내인지 확인
+- [ ] FFmpeg 로그에서 `-t` 옵션 적용 확인
+
+#### 중복 방지 검증
+- [ ] 여러 개 생성하여 중복 없는지 확인
+- [ ] 로그에 "Duplicate meme detected" 메시지 확인
+
+#### 키워드 매핑 검증
+- [ ] 다양한 주제로 서브레딧 매핑 확인
+- [ ] 주제와 관련성 있는 밈이 다운로드되는지 확인
+
+#### Tenor API 검증
+- [ ] Tenor로 키워드 검색 테스트
+- [ ] GIF가 정상 렌더링되는지 확인
+- [ ] 키워드별로 다른 GIF 제공되는지 확인
+
+#### 통합 비교 테스트
+- [ ] 모든 Provider 비교 (`pexels`, `reddit`, `imgflip`, `tenor`)
+- [ ] 이미지 품질, 키워드 관련성, 영상 길이 일관성 비교
+
+---
+
 - [ ] 효과음도 넣고
-- [ ] 짤방 또는 Ai영상 사용하도록 하고
 - [ ] 다양한 영상 효과들도 적재적소에 넣도록 하고
-- [ ] 프롬프트 개선하고
+- [x] 짤방 또는 Ai영상 사용하도록 하고
 - [ ] 대본 잘 짜도록 만들게 하고
-- [ ] 제목 짤린거 수정하고
+- [x] 제목 짤린거 수정하고
 - [ ] 글자 문장 끊기
 
 ---
@@ -128,8 +252,17 @@
 
 ### 전체 진행률
 - **완료**: Phase 1~15 완료
+- **진행 중**: Phase 16 (레딧 짤방 문제 해결)
+- **예상 소요 시간**: 2시간 25분
+
+### Phase 16 진행률
+- Phase 16-1: 0/7 (0%)
+- Phase 16-2: 0/13 (0%)
+- Phase 16-3: 0/6 (0%)
+- Phase 16-4: 0/11 (0%)
+- Phase 16-5: 0/13 (0%)
 
 ---
 
 **프로젝트 시작일**: 2026-01-14
-**상태**: 🟢 **Phase 15 완료 - 추가 개선 작업 준비 중**
+**상태**: 🟡 **Phase 16 진행 중 - 레딧 짤방 문제 해결**
