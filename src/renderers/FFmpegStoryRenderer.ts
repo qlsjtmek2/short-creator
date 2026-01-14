@@ -492,6 +492,12 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       actualIndex++;
     }
 
+    // Fix: 마크업 종료 태그(*)가 분리 지점에 있는 경우 포함시킴
+    // 예: "*WORD* Next"에서 공백으로 자를 때, actualIndex가 마지막 *를 가리키고 멈출 수 있음
+    while (actualIndex < text.length && text[actualIndex] === '*') {
+      actualIndex++;
+    }
+
     const line1 = text.substring(0, actualIndex).trim();
     const line2 = text.substring(actualIndex).trim();
 
