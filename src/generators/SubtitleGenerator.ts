@@ -1,10 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  createCanvas,
-  registerFont,
-  CanvasRenderingContext2D,
-} from 'canvas';
+import { createCanvas, registerFont, CanvasRenderingContext2D } from 'canvas';
 import { SubtitleEvent } from '../../types/common';
 import { ISubtitleGenerator } from '../../types/interfaces';
 import { getStoryConfig } from '../../config/shorts.config';
