@@ -49,3 +49,4 @@ export const promptsConfig: PromptsConfig = loadPrompts();
  */
 export const getWYRPrompts = () => promptsConfig.wouldYouRather;
 export const getStoryPrompts = () => promptsConfig.storytelling;
+export const getGeminiConfig = () => promptsConfig.geminiConfig;

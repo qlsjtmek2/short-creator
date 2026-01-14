@@ -2,13 +2,14 @@ import { GoogleGenerativeAI, GenerationConfig } from '@google/generative-ai';
 import { IQuestionGenerator } from '../../types/interfaces';
 import { WouldYouRatherQuestion } from '../../types/common';
 import { v4 as uuidv4 } from 'uuid';
-import { getWYRPrompts } from '../../config/prompts.config';
+import { getWYRPrompts, getGeminiConfig } from '../../config/prompts.config';
 
 export class GeminiQuestionGenerator implements IQuestionGenerator {
   private genAI: GoogleGenerativeAI;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private model: any;
   private promptConfig = getWYRPrompts();
+  private geminiConfig = getGeminiConfig();
 
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
@@ -21,7 +22,7 @@ export class GeminiQuestionGenerator implements IQuestionGenerator {
     };
 
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: this.geminiConfig.modelName,
       generationConfig,
     });
   }

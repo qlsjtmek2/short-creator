@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { StoryScript } from '../../types/common';
 import { IStoryGenerator } from '../../types/interfaces';
 import * as dotenv from 'dotenv';
-import { getStoryPrompts } from '../../config/prompts.config';
+import { getStoryPrompts, getGeminiConfig } from '../../config/prompts.config';
 
 dotenv.config();
 
@@ -11,12 +11,15 @@ export class GeminiStoryGenerator implements IStoryGenerator {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private model: any;
   private promptConfig = getStoryPrompts();
+  private geminiConfig = getGeminiConfig();
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    this.model = this.genAI.getGenerativeModel({
+      model: this.geminiConfig.modelName,
+    });
   }
 
   async generateStory(topic: string): Promise<StoryScript> {
