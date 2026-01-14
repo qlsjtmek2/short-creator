@@ -250,9 +250,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         const eventDurationMs = Math.floor((event.end - event.start) * 1000);
         
         // 애니메이션 효과: 
-        // 1. Pop-in: 0에서 popInDuration까지 (scaleUpStart -> scaleUpEnd)
-        // 2. Slow Zoom: popInDuration에서 끝까지 (scaleUpEnd -> finalScale)
-        const animatedText = `{\\fscx${anim.scaleUpStart}\\fscy${anim.scaleUpStart}\\t(0,${anim.popInDuration},\\fscx${anim.scaleUpEnd}\\fscy${anim.scaleUpEnd})\\t(${anim.popInDuration},${eventDurationMs},\\fscx${anim.finalScale}\\fscy${anim.finalScale})}${wrappedText}`;
+        // 1. Fade: 50ms 페이드 인/아웃으로 부드러운 전환
+        // 2. Pop-in: 0.5 가속도(Ease-out)로 쫀득하게 등장
+        // 3. Slow Zoom: 선형으로 천천히 확대
+        const animatedText = `{\\fad(50,50)\\fscx${anim.scaleUpStart}\\fscy${anim.scaleUpStart}\\t(0,${anim.popInDuration},0.5,\\fscx${anim.scaleUpEnd}\\fscy${anim.scaleUpEnd})\\t(${anim.popInDuration},${eventDurationMs},\\fscx${anim.finalScale}\\fscy${anim.finalScale})}${wrappedText}`;
         
         const start = this.formatTime(event.start);
         const end = this.formatTime(event.end);
