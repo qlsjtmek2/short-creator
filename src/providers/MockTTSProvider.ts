@@ -18,12 +18,17 @@ export class MockTTSProvider implements ITTSProvider {
     const fileName = `mock_audio_${Date.now()}.mp3`;
     const filePath = path.join(this.outputDir, fileName);
 
-    console.log(`🎙️ Mock TTS (Character: ${character}): "${text}" (Speed: ${this.speed})`);
+    console.log(
+      `🎙️ Mock TTS (Character: ${character}): "${text}" (Speed: ${this.speed})`,
+    );
 
     // 글자 수 기반 길이 계산 (기본 0.2초/자 * 속도 배율 역수)
     // Speed 2.0 -> 2배 빠름 -> 시간 0.5배
     const baseCharDuration = 0.2;
-    const duration = Math.max(1, (text.replace(/\s/g, '').length * baseCharDuration) / this.speed);
+    const duration = Math.max(
+      1,
+      (text.replace(/\s/g, '').length * baseCharDuration) / this.speed,
+    );
 
     // 무음 오디오 파일 생성
     try {

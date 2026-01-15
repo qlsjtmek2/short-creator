@@ -24,13 +24,11 @@ import { StoryOrchestrator } from '../../StoryOrchestrator';
 
 // Types & Config
 import { StoryScript } from '../../../types/common';
-import { getStoryConfig } from '../../../config/shorts.config';
 import { IImageProvider } from '../../../types/interfaces';
 
 dotenv.config();
 
 const router = Router();
-const storyConfig = getStoryConfig();
 
 // --- Job Management ---
 interface JobStatus {
@@ -49,18 +47,28 @@ const subtitleGenerator = new SubtitleGenerator();
 const videoRenderer = new FFmpegStoryRenderer();
 
 // Image Providers
-const pexelsProvider = new PexelsImageProvider(process.env.PEXELS_API_KEY || '');
-const klipyProvider = new KlipyGIFProvider(process.env.KLIPY_API_KEY || '88888888'); // Test Key
+const pexelsProvider = new PexelsImageProvider(
+  process.env.PEXELS_API_KEY || '',
+);
+const klipyProvider = new KlipyGIFProvider(
+  process.env.KLIPY_API_KEY || '88888888',
+); // Test Key
 const redditProvider = new RedditMemeProvider();
-const imgflipProvider = new ImgflipMemeProvider(process.env.IMGFLIP_USERNAME || '', process.env.IMGFLIP_PASSWORD || '');
-const googleProvider = new GoogleImageProvider(process.env.GOOGLE_SEARCH_API_KEY || '', process.env.GOOGLE_SEARCH_CX || '');
+const imgflipProvider = new ImgflipMemeProvider(
+  process.env.IMGFLIP_USERNAME || '',
+  process.env.IMGFLIP_PASSWORD || '',
+);
+const googleProvider = new GoogleImageProvider(
+  process.env.GOOGLE_SEARCH_API_KEY || '',
+  process.env.GOOGLE_SEARCH_CX || '',
+);
 
 const imageProviders: Record<string, IImageProvider> = {
   pexels: pexelsProvider,
   klipy: klipyProvider,
   reddit: redditProvider,
   imgflip: imgflipProvider,
-  google: googleProvider
+  google: googleProvider,
 };
 
 // Default Image Provider for Orchestrator (used for automatic flow)
@@ -73,7 +81,7 @@ if (process.env.ELEVENLABS_API_KEY) {
 } else if (process.env.TYPECAST_API_KEY) {
   ttsProvider = new TypecastTTSProvider(
     process.env.TYPECAST_API_KEY,
-    process.env.TYPECAST_ACTOR_ID || '60f669e4d5c41e973e8e4536'
+    process.env.TYPECAST_ACTOR_ID || '60f669e4d5c41e973e8e4536',
   );
 } else {
   console.warn('⚠️ No TTS API Key found. Using MockTTSProvider.');
@@ -86,7 +94,7 @@ const orchestrator = new StoryOrchestrator(
   defaultImageProvider,
   ttsProvider,
   subtitleGenerator,
-  videoRenderer
+  videoRenderer,
 );
 
 const OUTPUT_DIR = path.resolve(process.cwd(), 'output');
@@ -98,23 +106,23 @@ router.post('/draft', async (req, res) => {
   try {
     const { topic } = req.body;
     console.log(`📝 Generating draft script for topic: ${topic}`);
-    
+
     if (!topic) {
       return res.status(400).json({ error: 'Topic is required' });
     }
 
     const script: StoryScript = await storyGenerator.generateStory(topic);
-    
+
     // 프론트엔드 포맷에 맞게 변환
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedScript = script.sentences.map((s: any) => ({
       text: s.text,
-      imageKeyword: s.keyword
+      imageKeyword: s.keyword,
     }));
 
-    res.json({ 
+    res.json({
       topic: script.title,
-      script: formattedScript 
+      script: formattedScript,
     });
   } catch (error) {
     console.error('Error generating draft:', error);
@@ -126,7 +134,9 @@ router.post('/draft', async (req, res) => {
 router.post('/assets', async (req, res) => {
   try {
     const { keywords, provider = 'pexels' } = req.body;
-    console.log(`🖼️ Searching assets via [${provider}] for keywords: ${keywords}`);
+    console.log(
+      `🖼️ Searching assets via [${provider}] for keywords: ${keywords}`,
+    );
 
     if (!keywords || !Array.isArray(keywords)) {
       return res.status(400).json({ error: 'Keywords array is required' });
@@ -134,13 +144,15 @@ router.post('/assets', async (req, res) => {
 
     const targetProvider = imageProviders[provider] || imageProviders['pexels'];
 
-    const results = await Promise.all(keywords.map(async (keyword) => {
-      const images = await targetProvider.searchImages(keyword, 4);
-      return {
-        keyword,
-        images
-      };
-    }));
+    const results = await Promise.all(
+      keywords.map(async (keyword) => {
+        const images = await targetProvider.searchImages(keyword, 4);
+        return {
+          keyword,
+          images,
+        };
+      }),
+    );
 
     res.json({ results });
   } catch (error) {
@@ -162,13 +174,13 @@ router.post('/render', async (req, res) => {
     }
 
     const jobId = `job-${Date.now()}`;
-    
+
     // 초기 상태 저장
     jobStore.set(jobId, {
       status: 'processing',
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     });
-    
+
     // 비동기로 실행
     (async () => {
       try {
@@ -177,30 +189,33 @@ router.post('/render', async (req, res) => {
           topic,
           script,
           assetUrls,
-          OUTPUT_DIR
+          OUTPUT_DIR,
         );
-        
-        const relativePath = path.relative(path.join(process.cwd(), 'output'), finalVideoPath);
+
+        const relativePath = path.relative(
+          path.join(process.cwd(), 'output'),
+          finalVideoPath,
+        );
         const resultUrl = `/output/${relativePath}`;
 
         console.log(`✅ Job ${jobId} finished. URL: ${resultUrl}`);
-        
+
         jobStore.set(jobId, {
           status: 'completed',
           resultPath: finalVideoPath,
           resultUrl: resultUrl,
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
         });
       } catch (err) {
         console.error(`❌ Job ${jobId} failed:`, err);
         jobStore.set(jobId, {
           status: 'failed',
           error: err instanceof Error ? err.message : 'Unknown error',
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
         });
       }
     })();
-    
+
     res.json({ message: 'Rendering started', jobId });
   } catch (error) {
     console.error('Error starting render:', error);
@@ -226,7 +241,8 @@ router.get('/config', (req, res) => {
     gemini: !!process.env.GEMINI_API_KEY,
     pexels: !!process.env.PEXELS_API_KEY,
     elevenlabs: !!process.env.ELEVENLABS_API_KEY,
-    google: !!process.env.GOOGLE_SEARCH_API_KEY && !!process.env.GOOGLE_SEARCH_CX,
+    google:
+      !!process.env.GOOGLE_SEARCH_API_KEY && !!process.env.GOOGLE_SEARCH_CX,
     klipy: !!process.env.KLIPY_API_KEY,
     typecast: !!process.env.TYPECAST_API_KEY,
     imgflip: !!process.env.IMGFLIP_USERNAME && !!process.env.IMGFLIP_PASSWORD,

@@ -271,8 +271,11 @@ export class ImgflipMemeProvider implements IMemeProvider, IImageProvider {
     console.log('  🔄 Reset used meme templates tracking');
   }
 
-  async searchImages(keyword: string, count: number = 4): Promise<string[]> {
-    console.log(`⚠️ Search not implemented for Imgflip, returning empty array.`);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async searchImages(keyword: string, _count: number = 4): Promise<string[]> {
+    console.log(
+      `⚠️ Search not implemented for Imgflip, returning empty array.`,
+    );
     return [];
   }
 }

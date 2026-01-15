@@ -18,18 +18,26 @@ export const generateDraft = async (topic: string): Promise<DraftResponse> => {
   return response.data;
 };
 
-export const searchAssets = async (keywords: string[], provider: string = 'pexels') => {
+export const searchAssets = async (
+  keywords: string[],
+  provider: string = 'pexels',
+) => {
   const response = await api.post('/assets', { keywords, provider });
   return response.data;
 };
 
 export const renderVideo = async (
-  topic: string, 
-  script: ScriptSegment[], 
+  topic: string,
+  script: ScriptSegment[],
   assetUrls: string[],
-  options?: { mockTtsSpeed?: number }
+  options?: { mockTtsSpeed?: number },
 ) => {
-  const response = await api.post('/render', { topic, script, assetUrls, ...options });
+  const response = await api.post('/render', {
+    topic,
+    script,
+    assetUrls,
+    ...options,
+  });
   return response.data;
 };
 

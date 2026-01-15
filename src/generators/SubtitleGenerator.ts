@@ -70,7 +70,7 @@ export class SubtitleGenerator implements ISubtitleGenerator {
 
     for (const word of words) {
       const testLine = currentLine ? `${currentLine} ${word}` : word;
-      
+
       // ASS 태그 제거 후 너비 측정 (e.g. {\c&H...&} 제거)
       const cleanLine = testLine.replace(/\{.*?\}/g, '');
       const testWidth = ctx.measureText(cleanLine).width;
@@ -250,29 +250,32 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       .map((event, index) => {
         // 1. 강조 문법 처리: [텍스트] -> {\c&H00FFFF&}텍스트{\c&HFFFFFF&} (노란색 강조)
         // 주의: wrapText 이전에 처리해야 픽셀 너비 계산이 정확함 (태그 제외 너비 계산 필요)
-        const processedText = event.text.replace(/\[(.*?)\]/g, '{\\c&H00FFFF&}$1{\\c&HFFFFFF&}');
-        
+        const processedText = event.text.replace(
+          /\[(.*?)\]/g,
+          '{\\c&H00FFFF&}$1{\\c&HFFFFFF&}',
+        );
+
         // 텍스트 자동 줄바꿈 처리
         // wrapText 내부에서 ASS 태그를 무시하고 너비를 계산하도록 wrapTextByPixelWidth를 수정해야 할 수도 있음
         const wrappedText = this.wrapText(processedText, maxChars);
-        
+
         // 이벤트 전체 길이를 ms 단위로 계산
         const eventDurationMs = Math.floor((event.end - event.start) * 1000);
-        
-        // 애니메이션 효과: 
+
+        // 애니메이션 효과:
         // 1. Fade: 50ms 페이드 인/아웃으로 부드러운 전환
         // 2. Pop-in: 0.5 가속도(Ease-out)로 쫀득하게 등장
         // 3. Slow Zoom: 선형으로 천천히 확대
         const animatedText = `{\\fad(50,50)\\fscx${anim.scaleUpStart}\\fscy${anim.scaleUpStart}\\t(0,${anim.popInDuration},0.5,\\fscx${anim.scaleUpEnd}\\fscy${anim.scaleUpEnd})\\t(${anim.popInDuration},${eventDurationMs},\\fscx${anim.finalScale}\\fscy${anim.finalScale})}${wrappedText}`;
-        
+
         const start = this.formatTime(event.start);
-        
+
         // 다음 자막과 자연스럽게 연결되도록 종료 시간을 50ms 연장 (오버랩)
         // 마지막 자막은 연장하지 않음
         const isLast = index === events.length - 1;
         const endTime = isLast ? event.end : event.end + 0.05;
         const end = this.formatTime(endTime);
-        
+
         return `Dialogue: 0,${start},${end},Default,,0,0,0,,${animatedText}`;
       })
       .join('\n');

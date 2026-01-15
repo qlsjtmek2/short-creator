@@ -3,6 +3,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { IImageProvider } from '../../types/interfaces';
 
+interface PexelsPhoto {
+  src: {
+    large2x: string;
+    original: string;
+  };
+}
+
 export class PexelsImageProvider implements IImageProvider {
   private apiKey: string;
   private outputDir: string;
@@ -71,7 +78,9 @@ export class PexelsImageProvider implements IImageProvider {
   }
 
   async searchImages(keyword: string, count: number = 4): Promise<string[]> {
-    console.log(`⏳ Searching images for preview: ${keyword} (count: ${count})`);
+    console.log(
+      `⏳ Searching images for preview: ${keyword} (count: ${count})`,
+    );
     try {
       const response = await axios.get('https://api.pexels.com/v1/search', {
         params: {
@@ -83,8 +92,9 @@ export class PexelsImageProvider implements IImageProvider {
       });
 
       const photos = response.data.photos || [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return photos.map((photo: any) => photo.src.large2x || photo.src.original);
+      return photos.map(
+        (photo: PexelsPhoto) => photo.src.large2x || photo.src.original,
+      );
     } catch (error) {
       console.error('Failed to search images from Pexels:', error);
       return [];

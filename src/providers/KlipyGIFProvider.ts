@@ -158,9 +158,7 @@ export class KlipyGIFProvider implements IImageProvider {
 
       if (!data.results) return [];
 
-      return data.results
-        .map(r => r.media_formats.gif.url)
-        .slice(0, count);
+      return data.results.map((r) => r.media_formats.gif.url).slice(0, count);
     } catch (error) {
       console.error('Failed to search Klipy:', error);
       return [];

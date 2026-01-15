@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Image as ImageIcon, Search, Film, Smile, Settings as SettingsIcon, Key, Zap, Check } from 'lucide-react';
+import {
+  X,
+  Save,
+  Image as ImageIcon,
+  Search,
+  Film,
+  Smile,
+  Settings as SettingsIcon,
+  Key,
+  Zap,
+  Check,
+} from 'lucide-react';
 import { checkServerConfig } from '@/lib/api';
 
 interface SettingsModalProps {
@@ -22,7 +33,9 @@ const GEMINI_MODELS = [
 ];
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<'general' | 'keys' | 'advanced'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'keys' | 'advanced'>(
+    'general',
+  );
   const [serverConfig, setServerConfig] = useState<Record<string, boolean>>({});
   const [settings, setSettings] = useState({
     defaultProvider: 'pexels',
@@ -37,7 +50,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     imgflipUsername: '',
     imgflipPassword: '',
     geminiModel: 'gemini-1.5-flash',
-    systemPrompt: '당신은 유튜브 쇼츠 대본 작가입니다. 흥미롭고 자극적인 내용을 짧고 굵게 작성하세요.',
+    systemPrompt:
+      '당신은 유튜브 쇼츠 대본 작가입니다. 흥미롭고 자극적인 내용을 짧고 굵게 작성하세요.',
     mockTtsSpeed: 1.0,
   });
 
@@ -45,7 +59,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     // 1. Load Local Settings
     const savedSettings = localStorage.getItem('shorts-creator-settings');
     if (savedSettings) {
-      setSettings(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
+      setSettings((prev) => ({ ...prev, ...JSON.parse(savedSettings) }));
     }
 
     // 2. Check Server Config
@@ -61,12 +75,21 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   if (!isOpen) return null;
 
-  const TabButton = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
+  const TabButton = ({
+    id,
+    label,
+    icon: Icon,
+  }: {
+    id: typeof activeTab;
+    label: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon: any;
+  }) => (
     <button
       onClick={() => setActiveTab(id)}
       className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-        activeTab === id 
-          ? 'border-purple-500 text-purple-400' 
+        activeTab === id
+          ? 'border-purple-500 text-purple-400'
           : 'border-transparent text-zinc-500 hover:text-zinc-300'
       }`}
     >
@@ -76,7 +99,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   );
 
   // Status Badge Component
-  const StatusBadge = ({ configured, label = 'Server Configured' }: { configured: boolean, label?: string }) => {
+  const StatusBadge = ({
+    configured,
+    label = 'Server Configured',
+  }: {
+    configured: boolean;
+    label?: string;
+  }) => {
     if (!configured) return null;
     return (
       <span className="flex items-center gap-1 text-[10px] text-green-400 bg-green-400/10 px-2 py-0.5 rounded border border-green-400/20">
@@ -89,11 +118,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
-        
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800">
           <h2 className="text-xl font-bold text-white">설정</h2>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-zinc-500 hover:text-white transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -104,18 +135,19 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <TabButton id="keys" label="API 키 관리" icon={Key} />
           <TabButton id="advanced" label="고급 설정" icon={Zap} />
         </div>
-        
+
         {/* Content (Scrollable) */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-          
           {/* --- TAB: GENERAL --- */}
           {activeTab === 'general' && (
             <div className="space-y-8">
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">기본 이미지 소스</h3>
+                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+                  기본 이미지 소스
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {PROVIDERS.map(provider => (
-                    <label 
+                  {PROVIDERS.map((provider) => (
+                    <label
                       key={provider.id}
                       className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                         settings.defaultProvider === provider.id
@@ -128,15 +160,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         name="defaultProvider"
                         value={provider.id}
                         checked={settings.defaultProvider === provider.id}
-                        onChange={(e) => setSettings({...settings, defaultProvider: e.target.value})}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            defaultProvider: e.target.value,
+                          })
+                        }
                         className="hidden"
                       />
-                      <div className={`p-2 rounded-full ${settings.defaultProvider === provider.id ? 'bg-purple-500 text-white' : 'bg-zinc-800 text-zinc-400'}`}>
+                      <div
+                        className={`p-2 rounded-full ${settings.defaultProvider === provider.id ? 'bg-purple-500 text-white' : 'bg-zinc-800 text-zinc-400'}`}
+                      >
                         <provider.icon className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="font-semibold text-zinc-200">{provider.name}</div>
-                        <div className="text-xs text-zinc-500">{provider.desc}</div>
+                        <div className="font-semibold text-zinc-200">
+                          {provider.name}
+                        </div>
+                        <div className="text-xs text-zinc-500">
+                          {provider.desc}
+                        </div>
                       </div>
                     </label>
                   ))}
@@ -150,47 +193,75 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <div className="space-y-8">
               {/* AI & Search */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-2">AI & Search</h3>
-                
+                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-2">
+                  AI & Search
+                </h3>
+
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <label className="text-sm text-zinc-300">Gemini API Key</label>
+                    <label className="text-sm text-zinc-300">
+                      Gemini API Key
+                    </label>
                     <StatusBadge configured={serverConfig.gemini} />
                   </div>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     value={settings.geminiKey}
-                    onChange={e => setSettings({...settings, geminiKey: e.target.value})}
+                    onChange={(e) =>
+                      setSettings({ ...settings, geminiKey: e.target.value })
+                    }
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                    placeholder={serverConfig.gemini ? "서버 환경변수 사용 중 (.env)" : "API Key를 입력하세요"}
+                    placeholder={
+                      serverConfig.gemini
+                        ? '서버 환경변수 사용 중 (.env)'
+                        : 'API Key를 입력하세요'
+                    }
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-sm text-zinc-300">Pexels API Key</label>
-                      <StatusBadge configured={serverConfig.pexels} label="Env" />
+                      <label className="text-sm text-zinc-300">
+                        Pexels API Key
+                      </label>
+                      <StatusBadge
+                        configured={serverConfig.pexels}
+                        label="Env"
+                      />
                     </div>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       value={settings.pexelsKey}
-                      onChange={e => setSettings({...settings, pexelsKey: e.target.value})}
+                      onChange={(e) =>
+                        setSettings({ ...settings, pexelsKey: e.target.value })
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder={serverConfig.pexels ? "서버 값 사용 중" : "입력 필요"}
+                      placeholder={
+                        serverConfig.pexels ? '서버 값 사용 중' : '입력 필요'
+                      }
                     />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-sm text-zinc-300">Klipy API Key</label>
-                      <StatusBadge configured={serverConfig.klipy} label="Env" />
+                      <label className="text-sm text-zinc-300">
+                        Klipy API Key
+                      </label>
+                      <StatusBadge
+                        configured={serverConfig.klipy}
+                        label="Env"
+                      />
                     </div>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       value={settings.klipyKey}
-                      onChange={e => setSettings({...settings, klipyKey: e.target.value})}
+                      onChange={(e) =>
+                        setSettings({ ...settings, klipyKey: e.target.value })
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder={serverConfig.klipy ? "서버 값 사용 중" : "입력 필요"}
+                      placeholder={
+                        serverConfig.klipy ? '서버 값 사용 중' : '입력 필요'
+                      }
                     />
                   </div>
                 </div>
@@ -198,28 +269,52 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-sm text-zinc-300">Google Search Key</label>
-                      <StatusBadge configured={serverConfig.google} label="Env" />
+                      <label className="text-sm text-zinc-300">
+                        Google Search Key
+                      </label>
+                      <StatusBadge
+                        configured={serverConfig.google}
+                        label="Env"
+                      />
                     </div>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       value={settings.googleSearchKey}
-                      onChange={e => setSettings({...settings, googleSearchKey: e.target.value})}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          googleSearchKey: e.target.value,
+                        })
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder={serverConfig.google ? "서버 값 사용 중" : "입력 필요"}
+                      placeholder={
+                        serverConfig.google ? '서버 값 사용 중' : '입력 필요'
+                      }
                     />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-sm text-zinc-300">Google Search CX</label>
-                      <StatusBadge configured={serverConfig.google} label="Env" />
+                      <label className="text-sm text-zinc-300">
+                        Google Search CX
+                      </label>
+                      <StatusBadge
+                        configured={serverConfig.google}
+                        label="Env"
+                      />
                     </div>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={settings.googleSearchCx}
-                      onChange={e => setSettings({...settings, googleSearchCx: e.target.value})}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          googleSearchCx: e.target.value,
+                        })
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder={serverConfig.google ? "서버 값 사용 중" : "입력 필요"}
+                      placeholder={
+                        serverConfig.google ? '서버 값 사용 중' : '입력 필요'
+                      }
                     />
                   </div>
                 </div>
@@ -227,47 +322,85 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
               {/* TTS */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-2">TTS (Voice)</h3>
-                
+                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-2">
+                  TTS (Voice)
+                </h3>
+
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <label className="text-sm text-zinc-300">ElevenLabs API Key</label>
-                    <StatusBadge configured={serverConfig.elevenlabs} label="Env" />
+                    <label className="text-sm text-zinc-300">
+                      ElevenLabs API Key
+                    </label>
+                    <StatusBadge
+                      configured={serverConfig.elevenlabs}
+                      label="Env"
+                    />
                   </div>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     value={settings.elevenLabsKey}
-                    onChange={e => setSettings({...settings, elevenLabsKey: e.target.value})}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        elevenLabsKey: e.target.value,
+                      })
+                    }
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                    placeholder={serverConfig.elevenlabs ? "서버 값 사용 중" : "입력 필요"}
+                    placeholder={
+                      serverConfig.elevenlabs ? '서버 값 사용 중' : '입력 필요'
+                    }
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-sm text-zinc-300">Typecast API Key</label>
-                      <StatusBadge configured={serverConfig.typecast} label="Env" />
+                      <label className="text-sm text-zinc-300">
+                        Typecast API Key
+                      </label>
+                      <StatusBadge
+                        configured={serverConfig.typecast}
+                        label="Env"
+                      />
                     </div>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       value={settings.typecastKey}
-                      onChange={e => setSettings({...settings, typecastKey: e.target.value})}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          typecastKey: e.target.value,
+                        })
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder={serverConfig.typecast ? "서버 값 사용 중" : "입력 필요"}
+                      placeholder={
+                        serverConfig.typecast ? '서버 값 사용 중' : '입력 필요'
+                      }
                     />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-sm text-zinc-300">Typecast Actor ID</label>
-                      <StatusBadge configured={serverConfig.typecast} label="Env" />
+                      <label className="text-sm text-zinc-300">
+                        Typecast Actor ID
+                      </label>
+                      <StatusBadge
+                        configured={serverConfig.typecast}
+                        label="Env"
+                      />
                     </div>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={settings.typecastActorId}
-                      onChange={e => setSettings({...settings, typecastActorId: e.target.value})}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          typecastActorId: e.target.value,
+                        })
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder={serverConfig.typecast ? "서버 값 사용 중" : "입력 필요"}
+                      placeholder={
+                        serverConfig.typecast ? '서버 값 사용 중' : '입력 필요'
+                      }
                     />
                   </div>
                 </div>
@@ -276,52 +409,86 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="space-y-3 pt-4 border-t border-zinc-800">
                   <div className="flex justify-between text-sm text-zinc-300">
                     <label>Mock TTS Speed</label>
-                    <span className="font-mono text-purple-400">x{settings.mockTtsSpeed?.toFixed(1) || '1.0'}</span>
+                    <span className="font-mono text-purple-400">
+                      x{settings.mockTtsSpeed?.toFixed(1) || '1.0'}
+                    </span>
                   </div>
-                  <input 
-                    type="range" 
-                    min="0.5" 
-                    max="3.0" 
-                    step="0.1" 
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="3.0"
+                    step="0.1"
                     value={settings.mockTtsSpeed || 1.0}
-                    onChange={e => setSettings({...settings, mockTtsSpeed: parseFloat(e.target.value)})}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        mockTtsSpeed: parseFloat(e.target.value),
+                      })
+                    }
                     className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
                   />
                   <p className="text-xs text-zinc-500">
-                    * API 키가 없을 때 사용되는 가상 음성의 속도입니다. (1.0 = 표준)
+                    * API 키가 없을 때 사용되는 가상 음성의 속도입니다. (1.0 =
+                    표준)
                   </p>
                 </div>
               </div>
 
               {/* Other Services */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-2">Other Services</h3>
-                
+                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-2">
+                  Other Services
+                </h3>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-sm text-zinc-300">Imgflip Username</label>
-                      <StatusBadge configured={serverConfig.imgflip} label="Env" />
+                      <label className="text-sm text-zinc-300">
+                        Imgflip Username
+                      </label>
+                      <StatusBadge
+                        configured={serverConfig.imgflip}
+                        label="Env"
+                      />
                     </div>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={settings.imgflipUsername}
-                      onChange={e => setSettings({...settings, imgflipUsername: e.target.value})}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          imgflipUsername: e.target.value,
+                        })
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder={serverConfig.imgflip ? "서버 값 사용 중" : "입력 필요"}
+                      placeholder={
+                        serverConfig.imgflip ? '서버 값 사용 중' : '입력 필요'
+                      }
                     />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-sm text-zinc-300">Imgflip Password</label>
-                      <StatusBadge configured={serverConfig.imgflip} label="Env" />
+                      <label className="text-sm text-zinc-300">
+                        Imgflip Password
+                      </label>
+                      <StatusBadge
+                        configured={serverConfig.imgflip}
+                        label="Env"
+                      />
                     </div>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       value={settings.imgflipPassword}
-                      onChange={e => setSettings({...settings, imgflipPassword: e.target.value})}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          imgflipPassword: e.target.value,
+                        })
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder={serverConfig.imgflip ? "서버 값 사용 중" : "입력 필요"}
+                      placeholder={
+                        serverConfig.imgflip ? '서버 값 사용 중' : '입력 필요'
+                      }
                     />
                   </div>
                 </div>
@@ -333,16 +500,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {activeTab === 'advanced' && (
             <div className="space-y-8">
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Gemini Model</h3>
+                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+                  Gemini Model
+                </h3>
                 <div className="space-y-2">
-                  {GEMINI_MODELS.map(model => (
-                    <label key={model.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 cursor-pointer">
+                  {GEMINI_MODELS.map((model) => (
+                    <label
+                      key={model.id}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 cursor-pointer"
+                    >
                       <input
                         type="radio"
                         name="geminiModel"
                         value={model.id}
                         checked={settings.geminiModel === model.id}
-                        onChange={(e) => setSettings({...settings, geminiModel: e.target.value})}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            geminiModel: e.target.value,
+                          })
+                        }
                         className="text-purple-500 focus:ring-purple-500 bg-zinc-900 border-zinc-700"
                       />
                       <span className="text-zinc-200">{model.name}</span>
@@ -352,10 +529,14 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">System Prompt</h3>
+                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+                  System Prompt
+                </h3>
                 <textarea
                   value={settings.systemPrompt}
-                  onChange={e => setSettings({...settings, systemPrompt: e.target.value})}
+                  onChange={(e) =>
+                    setSettings({ ...settings, systemPrompt: e.target.value })
+                  }
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-sm leading-relaxed focus:outline-none focus:border-purple-500 transition-colors min-h-[150px]"
                   placeholder="AI에게 부여할 역할을 입력하세요..."
                 />
@@ -365,12 +546,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             </div>
           )}
-
         </div>
 
         {/* Footer */}
         <div className="p-6 border-t border-zinc-800 flex justify-end bg-zinc-900 rounded-b-2xl">
-          <button 
+          <button
             onClick={handleSave}
             className="bg-white hover:bg-zinc-200 text-black px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors shadow-lg"
           >

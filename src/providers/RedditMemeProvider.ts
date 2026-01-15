@@ -73,7 +73,9 @@ export class RedditMemeProvider implements IMemeProvider, IImageProvider {
     while (retries < this.maxRetries) {
       try {
         // API 호출
-        const endpoint = subreddit ? `${this.apiUrl}/${subreddit}` : this.apiUrl;
+        const endpoint = subreddit
+          ? `${this.apiUrl}/${subreddit}`
+          : this.apiUrl;
 
         console.log(
           `  🎲 Fetching random meme from Reddit (attempt ${retries + 1}/${this.maxRetries})...`,
@@ -202,8 +204,11 @@ export class RedditMemeProvider implements IMemeProvider, IImageProvider {
     console.log('  🔄 Reset used memes tracking');
   }
 
-  async searchImages(keyword: string, count: number = 4): Promise<string[]> {
-    console.log(`⚠️ Search not implemented for Reddit, returning random memes instead.`);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async searchImages(keyword: string, _count: number = 4): Promise<string[]> {
+    console.log(
+      `⚠️ Search not implemented for Reddit, returning random memes instead.`,
+    );
     // Reddit API는 검색보다는 랜덤이 메인이므로, 여기서는 빈 배열 반환 후 추후 구현
     return [];
   }

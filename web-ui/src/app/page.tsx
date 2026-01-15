@@ -19,7 +19,7 @@ export default function ShortCreator() {
   const [script, setScript] = useState<ScriptSegment[]>([]);
   const [assets, setAssets] = useState<AssetGroup[]>([]);
   const [jobId, setJobId] = useState<string | null>(null);
-  
+
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -49,19 +49,22 @@ export default function ShortCreator() {
 
   // Step 2 -> 3
   const handleGoToAssets = async () => {
-    handleSetLoading(true, `${defaultProvider === 'pexels' ? 'Pexels' : '이미지 소스'}에서 짤방을 찾고 있습니다...`);
+    handleSetLoading(
+      true,
+      `${defaultProvider === 'pexels' ? 'Pexels' : '이미지 소스'}에서 짤방을 찾고 있습니다...`,
+    );
     try {
-      const keywords = script.map(s => s.imageKeyword);
+      const keywords = script.map((s) => s.imageKeyword);
       // 초기 검색은 defaultProvider 사용
       const res = await searchAssets(keywords, defaultProvider);
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newAssets: AssetGroup[] = res.results.map((r: any) => ({
         keyword: r.keyword,
         images: r.images,
-        selectedImage: r.images[0]
+        selectedImage: r.images[0],
       }));
-      
+
       setAssets(newAssets);
       setStep(3);
     } catch (error) {
@@ -76,33 +79,34 @@ export default function ShortCreator() {
   const handleStartRender = async () => {
     handleSetLoading(true, '영상 렌더링을 시작합니다...');
     try {
-        const assetUrls = assets.map(group => group.selectedImage || group.images[0]);
-        
-        // 설정 로드
-        let mockTtsSpeed = 1.0;
-        const savedSettings = localStorage.getItem('shorts-creator-settings');
-        if (savedSettings) {
-          const parsed = JSON.parse(savedSettings);
-          if (parsed.mockTtsSpeed) mockTtsSpeed = parsed.mockTtsSpeed;
-        }
+      const assetUrls = assets.map(
+        (group) => group.selectedImage || group.images[0],
+      );
 
-        const res = await renderVideo(topic, script, assetUrls, { mockTtsSpeed });
-        setJobId(res.jobId);
-        setStep(4);
+      // 설정 로드
+      let mockTtsSpeed = 1.0;
+      const savedSettings = localStorage.getItem('shorts-creator-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.mockTtsSpeed) mockTtsSpeed = parsed.mockTtsSpeed;
+      }
+
+      const res = await renderVideo(topic, script, assetUrls, { mockTtsSpeed });
+      setJobId(res.jobId);
+      setStep(4);
     } catch (error) {
-        console.error(error);
-        alert('렌더링 요청에 실패했습니다.');
+      console.error(error);
+      alert('렌더링 요청에 실패했습니다.');
     } finally {
-        handleSetLoading(false, '');
+      handleSetLoading(false, '');
     }
   };
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-purple-500/30">
-      
       {/* Sticky Header (Visible from Step 2) */}
       {step > 1 && step < 4 && (
-        <StickyHeader 
+        <StickyHeader
           step={step}
           onBack={() => setStep(step - 1)}
           onNext={step === 2 ? handleGoToAssets : handleStartRender}
@@ -112,9 +116,8 @@ export default function ShortCreator() {
 
       {/* Main Content */}
       <div className={step === 1 ? 'container mx-auto px-4' : ''}>
-        
         {step === 1 && (
-          <Step1_Topic 
+          <Step1_Topic
             onNext={handleDraftCreated}
             setLoading={handleSetLoading}
             isLoading={loading}
@@ -123,7 +126,7 @@ export default function ShortCreator() {
         )}
 
         {step === 2 && (
-          <Step2_Script 
+          <Step2_Script
             script={script}
             setScript={setScript}
             topic={topic}
@@ -132,9 +135,9 @@ export default function ShortCreator() {
         )}
 
         {step === 3 && (
-          <Step3_Assets 
+          <Step3_Assets
             script={script}
-            setScript={setScript} 
+            setScript={setScript}
             assets={assets}
             setAssets={setAssets}
             defaultProvider={defaultProvider}
@@ -142,7 +145,7 @@ export default function ShortCreator() {
         )}
 
         {step === 4 && jobId && (
-          <Step4_Render 
+          <Step4_Render
             jobId={jobId}
             onReset={() => window.location.reload()}
           />
@@ -150,7 +153,7 @@ export default function ShortCreator() {
       </div>
 
       {/* Settings Modal */}
-      <SettingsModal 
+      <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />

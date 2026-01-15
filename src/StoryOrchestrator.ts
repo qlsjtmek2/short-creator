@@ -45,7 +45,7 @@ export class StoryOrchestrator {
 
     // 2. 각 문장별 병렬 처리 (이미지 + TTS)
     console.log(
-      '2️⃣ Downloading images and generating TTS for each sentence...', 
+      '2️⃣ Downloading images and generating TTS for each sentence...',
     );
     const sentencesWithAssets = await Promise.all(
       script.sentences.map(async (sentence, index) => {
@@ -118,17 +118,17 @@ export class StoryOrchestrator {
     title: string,
     segments: { text: string; imageKeyword: string }[],
     imageUrls: string[],
-    outputDir: string
+    outputDir: string,
   ): Promise<string> {
     console.log(`\n🎬 Generating interactive story shorts: "${title}"`);
 
     // 1. 대본 구조 복원
     const script = {
-        title,
-        sentences: segments.map((s, i) => ({
-            text: s.text,
-            keyword: s.imageKeyword
-        }))
+      title,
+      sentences: segments.map((s) => ({
+        text: s.text,
+        keyword: s.imageKeyword,
+      })),
     };
 
     // 2. 각 문장별 병렬 처리 (이미지 다운로드 + TTS)
@@ -137,24 +137,41 @@ export class StoryOrchestrator {
       script.sentences.map(async (sentence, index) => {
         const imageUrl = imageUrls[index];
         const uniqueId = `${Date.now()}_${index}`;
-        
+
         // 2-1. 이미지 다운로드 (URL -> 파일)
-        const imagePath = path.join(outputDir, 'images', `interactive_${uniqueId}.jpg`);
+        const imagePath = path.join(
+          outputDir,
+          'images',
+          `interactive_${uniqueId}.jpg`,
+        );
         const imageDir = path.dirname(imagePath);
-        if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir, { recursive: true });
+        if (!fs.existsSync(imageDir))
+          fs.mkdirSync(imageDir, { recursive: true });
 
         // URL에서 이미지 다운로드
-        console.log(`  - Downloading image for scene ${index + 1}: ${imageUrl}`);
-        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        console.log(
+          `  - Downloading image for scene ${index + 1}: ${imageUrl}`,
+        );
+        const response = await axios.get(imageUrl, {
+          responseType: 'arraybuffer',
+        });
         fs.writeFileSync(imagePath, response.data);
 
         // 2-2. TTS 생성 (기존 로직 사용)
-        const audioPath = path.join(outputDir, 'audio', `interactive_${uniqueId}.mp3`);
+        const audioPath = path.join(
+          outputDir,
+          'audio',
+          `interactive_${uniqueId}.mp3`,
+        );
         const audioDir = path.dirname(audioPath);
-        if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
-        
+        if (!fs.existsSync(audioDir))
+          fs.mkdirSync(audioDir, { recursive: true });
+
         console.log(`  - Generating TTS for scene ${index + 1}`);
-        const generatedAudioPath = await this.ttsProvider.generateAudio(sentence.text, 'neutral');
+        const generatedAudioPath = await this.ttsProvider.generateAudio(
+          sentence.text,
+          'neutral',
+        );
         fs.copyFileSync(generatedAudioPath, audioPath);
 
         // 2-3. 길이 추출
@@ -166,7 +183,7 @@ export class StoryOrchestrator {
           audioPath,
           duration,
         } as StorySentence;
-      })
+      }),
     );
 
     // 공통 렌더링 파이프라인 호출
@@ -177,9 +194,9 @@ export class StoryOrchestrator {
    * 에셋 준비 이후의 공통 렌더링 파이프라인 (타임스탬프 -> 자막 -> 렌더링)
    */
   private async _processPostAssets(
-    script: { title: string }, 
-    sentencesWithAssets: StorySentence[], 
-    outputDir: string
+    script: { title: string },
+    sentencesWithAssets: StorySentence[],
+    outputDir: string,
   ): Promise<string> {
     // 3. 타임스탬프 계산
     console.log('3️⃣ Calculating timestamps...');
@@ -248,25 +265,25 @@ export class StoryOrchestrator {
 
     // 1. 단순 단어 단위 분할 (공백 기준)
     const words = text.split(/\s+/);
-    
+
     // 2. 청크 생성 (한 화면에 보여줄 단어 수)
     // 짧은 문장은 통째로, 긴 문장은 2~3단어씩 끊어서
     const chunks: string[] = [];
     let currentChunk: string[] = [];
-    
+
     // 문장 길이에 따라 청크 사이즈 동적 조절
     // 아주 긴 문장은 2단어씩 빠르게, 짧은 문장은 3~4단어씩 여유있게
     const wordsPerChunk = words.length > 10 ? 2 : 3;
 
     for (const word of words) {
       currentChunk.push(word);
-      
+
       // 구두점(., ?, !)으로 끝나면 무조건 청크 분리
       // 또는 설정된 단어 수에 도달하면 분리
       if (
-        currentChunk.length >= wordsPerChunk || 
-        word.endsWith('.') || 
-        word.endsWith('?') || 
+        currentChunk.length >= wordsPerChunk ||
+        word.endsWith('.') ||
+        word.endsWith('?') ||
         word.endsWith('!') ||
         word.endsWith(',')
       ) {
@@ -274,7 +291,7 @@ export class StoryOrchestrator {
         currentChunk = [];
       }
     }
-    
+
     // 남은 단어 처리
     if (currentChunk.length > 0) {
       chunks.push(currentChunk.join(' '));
@@ -283,18 +300,18 @@ export class StoryOrchestrator {
     // 3. 시간 배분 (글자 수 비율에 따라)
     const totalChars = text.replace(/\s/g, '').length; // 공백 제외 글자 수
     let currentStartTime = sentence.startTime!;
-    
+
     return chunks.map((chunkText) => {
       const chunkChars = chunkText.replace(/\s/g, '').length;
       // 비율대로 시간 할당하되, 최소 시간(0.5초) 보장 등은 하지 않음 (자연스러운 흐름 위해)
       const chunkDuration = (chunkChars / totalChars) * duration;
-      
+
       const event: SubtitleEvent = {
         start: currentStartTime,
         end: currentStartTime + chunkDuration,
         text: chunkText,
       };
-      
+
       currentStartTime += chunkDuration;
       return event;
     });

@@ -26,16 +26,19 @@ export class GoogleImageProvider implements IImageProvider {
 
     console.log(`🔍 Searching Google Images for: ${keyword}`);
     try {
-      const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
-        params: {
-          key: this.apiKey,
-          cx: this.cx,
-          q: keyword,
-          searchType: 'image',
-          num: count, // Max 10
-          safe: 'active'
-        }
-      });
+      const response = await axios.get(
+        'https://www.googleapis.com/customsearch/v1',
+        {
+          params: {
+            key: this.apiKey,
+            cx: this.cx,
+            q: keyword,
+            searchType: 'image',
+            num: count, // Max 10
+            safe: 'active',
+          },
+        },
+      );
 
       if (!response.data.items) return [];
 
@@ -53,22 +56,24 @@ export class GoogleImageProvider implements IImageProvider {
     if (urls.length === 0) {
       throw new Error(`No images found on Google for: ${keyword}`);
     }
-    
+
     const imageUrl = urls[0];
-    
+
     // 2. 다운로드
     try {
       console.log(`⏳ Downloading image from Google: ${imageUrl}`);
-      const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-      
+      const response = await axios.get(imageUrl, {
+        responseType: 'arraybuffer',
+      });
+
       // 확장자 추출 (URL이나 Content-Type에서)
       const ext = path.extname(new URL(imageUrl).pathname) || '.jpg';
       const filename = `google_${Date.now()}_${Math.floor(Math.random() * 1000)}${ext}`;
       const filepath = path.join(this.outputDir, filename);
-      
+
       fs.writeFileSync(filepath, response.data);
       console.log(`✅ Image saved to: ${filepath}`);
-      
+
       return filepath;
     } catch (error) {
       console.error(`Failed to download image: ${imageUrl}`, error);

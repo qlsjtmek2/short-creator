@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Search, CheckCircle2, Image as ImageIcon, Smile, Film } from 'lucide-react';
+import {
+  RefreshCw,
+  Search,
+  CheckCircle2,
+  Image as ImageIcon,
+  Smile,
+  Film,
+} from 'lucide-react';
 import { AssetGroup, ScriptSegment } from '@/types';
 import { searchAssets } from '@/lib/api';
 
@@ -19,10 +26,18 @@ const PROVIDERS = [
   { id: 'imgflip', name: 'Imgflip (짤방)', icon: Smile },
 ];
 
-export default function Step3_Assets({ script, assets, setAssets, setScript, defaultProvider }: Step3Props) {
+export default function Step3_Assets({
+  script,
+  assets,
+  setAssets,
+  setScript,
+  defaultProvider,
+}: Step3Props) {
   const [loadingIndices, setLoadingIndices] = useState<number[]>([]);
   // 각 씬별 선택된 Provider 상태 관리 (초기값: defaultProvider)
-  const [sceneProviders, setSceneProviders] = useState<Record<number, string>>({});
+  const [sceneProviders, setSceneProviders] = useState<Record<number, string>>(
+    {},
+  );
 
   // 초기화
   useEffect(() => {
@@ -34,17 +49,17 @@ export default function Step3_Assets({ script, assets, setAssets, setScript, def
   }, [script.length, defaultProvider]);
 
   const handleProviderChange = (index: number, provider: string) => {
-    setSceneProviders(prev => ({ ...prev, [index]: provider }));
+    setSceneProviders((prev) => ({ ...prev, [index]: provider }));
   };
 
   // 개별 씬 키워드 수정 및 재검색
   const handleRefreshAsset = async (index: number, newKeyword: string) => {
     if (!newKeyword) return;
-    
+
     // 로딩 상태 설정
-    setLoadingIndices(prev => [...prev, index]);
+    setLoadingIndices((prev) => [...prev, index]);
     const currentProvider = sceneProviders[index] || defaultProvider;
-    
+
     try {
       // 키워드 업데이트 (대본에도 반영)
       const newScript = [...script];
@@ -60,15 +75,14 @@ export default function Step3_Assets({ script, assets, setAssets, setScript, def
       newAssets[index] = {
         keyword: newKeyword,
         images: newImages,
-        selectedImage: newImages[0] // 첫 번째 이미지 자동 선택
+        selectedImage: newImages[0], // 첫 번째 이미지 자동 선택
       };
       setAssets(newAssets);
-
     } catch (error) {
       console.error(error);
       alert('이미지 검색에 실패했습니다.');
     } finally {
-      setLoadingIndices(prev => prev.filter(i => i !== index));
+      setLoadingIndices((prev) => prev.filter((i) => i !== index));
     }
   };
 
@@ -84,13 +98,19 @@ export default function Step3_Assets({ script, assets, setAssets, setScript, def
         const assetGroup = assets[index];
         const isLoading = loadingIndices.includes(index);
         const currentProvider = sceneProviders[index] || defaultProvider;
-        
-        if (!assetGroup) return (
-            <div key={index} className="text-zinc-500">Scene {index + 1}: 이미지를 불러오는 중...</div>
-        );
+
+        if (!assetGroup)
+          return (
+            <div key={index} className="text-zinc-500">
+              Scene {index + 1}: 이미지를 불러오는 중...
+            </div>
+          );
 
         return (
-          <div key={index} className="space-y-4 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6 md:p-8">
+          <div
+            key={index}
+            className="space-y-4 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6 md:p-8"
+          >
             {/* Header: Text & Controls */}
             <div className="flex flex-col md:flex-row md:items-start gap-6 justify-between">
               <div className="flex items-start gap-4 flex-1">
@@ -104,27 +124,42 @@ export default function Step3_Assets({ script, assets, setAssets, setScript, def
 
               {/* Controls: Provider Select + Keyword Input */}
               <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                
                 {/* Provider Selector */}
                 <div className="relative">
                   <select
                     value={currentProvider}
-                    onChange={(e) => handleProviderChange(index, e.target.value)}
+                    onChange={(e) =>
+                      handleProviderChange(index, e.target.value)
+                    }
                     className="appearance-none bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 pr-8 text-sm focus:outline-none focus:border-purple-500/50 text-zinc-300 w-full sm:w-auto h-full cursor-pointer hover:bg-zinc-900 transition-colors"
                   >
-                    {PROVIDERS.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                    {PROVIDERS.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
                     ))}
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      ></path>
+                    </svg>
                   </div>
                 </div>
 
                 {/* Keyword Search Bar */}
                 <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 focus-within:border-purple-500/50 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all w-full md:min-w-[250px]">
                   <Search className="w-4 h-4 text-zinc-500" />
-                  <input 
+                  <input
                     type="text"
                     defaultValue={assetGroup.keyword}
                     onKeyDown={(e) => {
@@ -135,15 +170,18 @@ export default function Step3_Assets({ script, assets, setAssets, setScript, def
                     className="bg-transparent border-none focus:outline-none text-sm text-zinc-200 w-full placeholder:text-zinc-600"
                     placeholder="검색어..."
                   />
-                  <button 
+                  <button
                     onClick={(e) => {
-                      const input = e.currentTarget.previousSibling as HTMLInputElement;
+                      const input = e.currentTarget
+                        .previousSibling as HTMLInputElement;
                       handleRefreshAsset(index, input.value);
                     }}
                     disabled={isLoading}
                     className="p-1 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors"
                   >
-                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    <RefreshCw
+                      className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
+                    />
                   </button>
                 </div>
               </div>
@@ -152,19 +190,20 @@ export default function Step3_Assets({ script, assets, setAssets, setScript, def
             {/* Image Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {assetGroup.images.map((imgUrl, imgIdx) => (
-                <div 
+                <div
                   key={imgIdx}
                   onClick={() => handleSelectImage(index, imgUrl)}
                   className={`
                     relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group transition-all duration-300
-                    ${assetGroup.selectedImage === imgUrl 
-                      ? 'ring-4 ring-purple-500 ring-offset-2 ring-offset-zinc-900 scale-[1.02] shadow-xl shadow-purple-900/20 z-10' 
-                      : 'opacity-60 hover:opacity-100 hover:scale-[1.02] hover:z-10 bg-zinc-800'
+                    ${
+                      assetGroup.selectedImage === imgUrl
+                        ? 'ring-4 ring-purple-500 ring-offset-2 ring-offset-zinc-900 scale-[1.02] shadow-xl shadow-purple-900/20 z-10'
+                        : 'opacity-60 hover:opacity-100 hover:scale-[1.02] hover:z-10 bg-zinc-800'
                     }
                   `}
                 >
-                  <img 
-                    src={imgUrl} 
+                  <img
+                    src={imgUrl}
                     alt={`Candidate ${imgIdx}`}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
@@ -178,12 +217,16 @@ export default function Step3_Assets({ script, assets, setAssets, setScript, def
                   )}
                 </div>
               ))}
-              
+
               {/* Empty/Loading State Placeholders if less than 4 images */}
-              {isLoading && Array.from({ length: 4 }).map((_, i) => (
-                <div key={`loading-${i}`} className="aspect-[9/16] rounded-xl bg-zinc-800 animate-pulse" />
-              ))}
-              
+              {isLoading &&
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={`loading-${i}`}
+                    className="aspect-[9/16] rounded-xl bg-zinc-800 animate-pulse"
+                  />
+                ))}
+
               {!isLoading && assetGroup.images.length === 0 && (
                 <div className="col-span-2 md:col-span-4 py-8 text-center text-zinc-500 bg-zinc-900/50 rounded-xl border border-dashed border-zinc-800">
                   <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
