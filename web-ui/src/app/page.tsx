@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { ScriptSegment, AssetGroup } from '@/types';
 import { searchAssets, renderVideo } from '@/lib/api';
@@ -23,6 +23,16 @@ export default function ShortCreator() {
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [defaultProvider, setDefaultProvider] = useState('pexels');
+
+  // Load default provider
+  useEffect(() => {
+    const saved = localStorage.getItem('shorts-creator-settings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.defaultProvider) setDefaultProvider(parsed.defaultProvider);
+    }
+  }, [isSettingsOpen]); // 설정 닫힐 때 업데이트
 
   // Loading Helper
   const handleSetLoading = (isLoading: boolean, text: string) => {
@@ -39,10 +49,11 @@ export default function ShortCreator() {
 
   // Step 2 -> 3
   const handleGoToAssets = async () => {
-    handleSetLoading(true, 'Pexels에서 어울리는 짤방을 찾고 있습니다...');
+    handleSetLoading(true, `${defaultProvider === 'pexels' ? 'Pexels' : '이미지 소스'}에서 짤방을 찾고 있습니다...`);
     try {
       const keywords = script.map(s => s.imageKeyword);
-      const res = await searchAssets(keywords);
+      // 초기 검색은 defaultProvider 사용
+      const res = await searchAssets(keywords, defaultProvider);
       
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newAssets: AssetGroup[] = res.results.map((r: any) => ({
@@ -98,6 +109,7 @@ export default function ShortCreator() {
             onNext={handleDraftCreated}
             setLoading={handleSetLoading}
             isLoading={loading}
+            onOpenSettings={() => setIsSettingsOpen(true)}
           />
         )}
 
@@ -113,9 +125,10 @@ export default function ShortCreator() {
         {step === 3 && (
           <Step3_Assets 
             script={script}
-            setScript={setScript} // 키워드 수정 시 대본 업데이트
+            setScript={setScript} 
             assets={assets}
             setAssets={setAssets}
+            defaultProvider={defaultProvider}
           />
         )}
 

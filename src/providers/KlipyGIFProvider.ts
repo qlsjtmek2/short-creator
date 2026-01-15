@@ -138,7 +138,32 @@ export class KlipyGIFProvider implements IImageProvider {
   }
 
   async searchImages(keyword: string, count: number = 4): Promise<string[]> {
-    console.log(`⚠️ Search not implemented for Klipy, returning empty array.`);
-    return [];
+    console.log(`🔍 Searching KLIPY images for preview: ${keyword}`);
+    try {
+      const searchUrl = `${this.apiUrl}/search?q=${encodeURIComponent(keyword)}&key=${this.apiKey}&limit=${count * 2}&contentfilter=high`;
+      const response = await fetch(searchUrl);
+
+      if (!response.ok) {
+        console.warn(`Klipy API error: ${response.status}`);
+        return [];
+      }
+
+      const data = (await response.json()) as {
+        results: Array<{
+          media_formats: {
+            gif: { url: string };
+          };
+        }>;
+      };
+
+      if (!data.results) return [];
+
+      return data.results
+        .map(r => r.media_formats.gif.url)
+        .slice(0, count);
+    } catch (error) {
+      console.error('Failed to search Klipy:', error);
+      return [];
+    }
   }
 }

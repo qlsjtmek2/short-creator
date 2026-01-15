@@ -8,6 +8,9 @@ import { SubtitleGenerator } from '../../generators/SubtitleGenerator';
 
 // Providers
 import { PexelsImageProvider } from '../../providers/PexelsImageProvider';
+import { KlipyGIFProvider } from '../../providers/KlipyGIFProvider';
+import { RedditMemeProvider } from '../../providers/RedditMemeProvider';
+import { ImgflipMemeProvider } from '../../providers/ImgflipMemeProvider';
 import { TypecastTTSProvider } from '../../providers/TypecastTTSProvider';
 import { ElevenLabsTTSProvider } from '../../providers/ElevenLabsTTSProvider';
 import { MockTTSProvider } from '../../providers/MockTTSProvider';
@@ -21,6 +24,7 @@ import { StoryOrchestrator } from '../../StoryOrchestrator';
 // Types & Config
 import { StoryScript } from '../../../types/common';
 import { getStoryConfig } from '../../../config/shorts.config';
+import { IImageProvider } from '../../../types/interfaces';
 
 dotenv.config();
 
@@ -43,9 +47,21 @@ const storyGenerator = new GeminiStoryGenerator();
 const subtitleGenerator = new SubtitleGenerator();
 const videoRenderer = new FFmpegStoryRenderer();
 
-// Image Provider (Default: Pexels)
-const pexelsApiKey = process.env.PEXELS_API_KEY || '';
-const imageProvider = new PexelsImageProvider(pexelsApiKey);
+// Image Providers
+const pexelsProvider = new PexelsImageProvider(process.env.PEXELS_API_KEY || '');
+const klipyProvider = new KlipyGIFProvider(process.env.KLIPY_API_KEY || '88888888'); // Test Key
+const redditProvider = new RedditMemeProvider();
+// const imgflipProvider = new ImgflipMemeProvider(process.env.IMGFLIP_USERNAME || '', process.env.IMGFLIP_PASSWORD || '');
+
+const imageProviders: Record<string, IImageProvider> = {
+  pexels: pexelsProvider,
+  klipy: klipyProvider,
+  reddit: redditProvider,
+  // imgflip: imgflipProvider
+};
+
+// Default Image Provider for Orchestrator (used for automatic flow)
+const defaultImageProvider = pexelsProvider;
 
 // TTS Provider
 let ttsProvider;
@@ -64,7 +80,7 @@ if (process.env.ELEVENLABS_API_KEY) {
 // Orchestrator
 const orchestrator = new StoryOrchestrator(
   storyGenerator,
-  imageProvider,
+  defaultImageProvider,
   ttsProvider,
   subtitleGenerator,
   videoRenderer
@@ -106,15 +122,17 @@ router.post('/draft', async (req, res) => {
 // 2. 에셋 검색 (Search Assets)
 router.post('/assets', async (req, res) => {
   try {
-    const { keywords } = req.body;
-    console.log(`🖼️ Searching assets for keywords: ${keywords}`);
+    const { keywords, provider = 'pexels' } = req.body;
+    console.log(`🖼️ Searching assets via [${provider}] for keywords: ${keywords}`);
 
     if (!keywords || !Array.isArray(keywords)) {
       return res.status(400).json({ error: 'Keywords array is required' });
     }
 
+    const targetProvider = imageProviders[provider] || imageProviders['pexels'];
+
     const results = await Promise.all(keywords.map(async (keyword) => {
-      const images = await imageProvider.searchImages(keyword, 4);
+      const images = await targetProvider.searchImages(keyword, 4);
       return {
         keyword,
         images
@@ -153,10 +171,8 @@ router.post('/render', async (req, res) => {
           OUTPUT_DIR
         );
         
-        // 절대 경로를 상대 경로 URL로 변환
-        // 예: /User/.../short-creator/output/videos/file.mp4 -> /output/videos/file.mp4
         const relativePath = path.relative(path.join(process.cwd(), 'output'), finalVideoPath);
-        const resultUrl = `/output/${relativePath}`; // Static serving path
+        const resultUrl = `/output/${relativePath}`;
 
         console.log(`✅ Job ${jobId} finished. URL: ${resultUrl}`);
         

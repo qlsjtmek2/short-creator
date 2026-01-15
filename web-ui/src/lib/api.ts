@@ -18,8 +18,8 @@ export const generateDraft = async (topic: string): Promise<DraftResponse> => {
   return response.data;
 };
 
-export const searchAssets = async (keywords: string[]) => {
-  const response = await api.post('/assets', { keywords });
+export const searchAssets = async (keywords: string[], provider: string = 'pexels') => {
+  const response = await api.post('/assets', { keywords, provider });
   return response.data;
 };
 
