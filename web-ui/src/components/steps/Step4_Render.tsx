@@ -97,15 +97,15 @@ export default function Step4_Render({ jobId, onReset }: Step4Props) {
               <Download className="w-5 h-5" />
               영상 다운로드
             </a>
+
+            <button 
+              onClick={onReset}
+              className="block w-full bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-md"
+            >
+              새로운 쇼츠 만들기
+            </button>
           </div>
         )}
-
-        <button 
-          onClick={onReset}
-          className="mt-12 text-zinc-500 hover:text-white transition-colors text-sm font-medium hover:underline underline-offset-4"
-        >
-          새로운 쇼츠 만들기
-        </button>
       </div>
     );
   }

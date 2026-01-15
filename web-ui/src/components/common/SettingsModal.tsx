@@ -11,6 +11,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     geminiKey: '',
     pexelsKey: '',
     elevenLabsKey: '',
+    googleSearchKey: '',
+    googleSearchCx: '',
     defaultProvider: 'pexels'
   });
 
@@ -33,8 +35,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="flex justify-between items-center p-6 border-b border-zinc-800">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="flex justify-between items-center p-6 border-b border-zinc-800 sticky top-0 bg-zinc-900 z-10">
           <h2 className="text-xl font-bold text-white">설정</h2>
           <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
             <X className="w-5 h-5" />
@@ -68,6 +70,28 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
 
             <div className="space-y-2">
+              <label className="text-sm text-zinc-300">Google Search API Key (Image)</label>
+              <input 
+                type="password" 
+                value={settings.googleSearchKey}
+                onChange={e => setSettings({...settings, googleSearchKey: e.target.value})}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                placeholder="Google Custom Search API Key"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm text-zinc-300">Google Search CX (Search Engine ID)</label>
+              <input 
+                type="text" 
+                value={settings.googleSearchCx}
+                onChange={e => setSettings({...settings, googleSearchCx: e.target.value})}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                placeholder="Search Engine ID (CX)"
+              />
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm text-zinc-300">ElevenLabs API Key (Optional)</label>
               <input 
                 type="password" 
@@ -89,14 +113,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors text-white"
               >
                 <option value="pexels">Pexels (고화질 사진)</option>
+                <option value="google">Google (웹 검색)</option>
                 <option value="reddit">Reddit (밈/유머)</option>
-                {/* <option value="tenor">Tenor (GIF)</option> */}
+                <option value="klipy">Klipy (GIF)</option>
               </select>
             </div>
           </div>
         </div>
 
-        <div className="p-6 border-t border-zinc-800 flex justify-end">
+        <div className="p-6 border-t border-zinc-800 flex justify-end sticky bottom-0 bg-zinc-900 z-10">
           <button 
             onClick={handleSave}
             className="bg-white hover:bg-zinc-200 text-black px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors"

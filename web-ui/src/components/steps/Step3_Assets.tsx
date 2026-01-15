@@ -12,9 +12,11 @@ interface Step3Props {
 }
 
 const PROVIDERS = [
-  { id: 'pexels', name: 'Pexels', icon: ImageIcon },
+  { id: 'pexels', name: 'Pexels (사진)', icon: ImageIcon },
+  { id: 'google', name: 'Google (검색)', icon: Search },
   { id: 'klipy', name: 'Klipy (GIF)', icon: Film },
-  // { id: 'reddit', name: 'Reddit (Meme)', icon: Smile }, // 검색 기능 미약하여 일단 제외하거나 켤 수 있음
+  { id: 'reddit', name: 'Reddit (밈)', icon: Smile },
+  { id: 'imgflip', name: 'Imgflip (짤방)', icon: Smile },
 ];
 
 export default function Step3_Assets({ script, assets, setAssets, setScript, defaultProvider }: Step3Props) {

@@ -11,6 +11,7 @@ import { PexelsImageProvider } from '../../providers/PexelsImageProvider';
 import { KlipyGIFProvider } from '../../providers/KlipyGIFProvider';
 import { RedditMemeProvider } from '../../providers/RedditMemeProvider';
 import { ImgflipMemeProvider } from '../../providers/ImgflipMemeProvider';
+import { GoogleImageProvider } from '../../providers/GoogleImageProvider';
 import { TypecastTTSProvider } from '../../providers/TypecastTTSProvider';
 import { ElevenLabsTTSProvider } from '../../providers/ElevenLabsTTSProvider';
 import { MockTTSProvider } from '../../providers/MockTTSProvider';
@@ -51,13 +52,15 @@ const videoRenderer = new FFmpegStoryRenderer();
 const pexelsProvider = new PexelsImageProvider(process.env.PEXELS_API_KEY || '');
 const klipyProvider = new KlipyGIFProvider(process.env.KLIPY_API_KEY || '88888888'); // Test Key
 const redditProvider = new RedditMemeProvider();
-// const imgflipProvider = new ImgflipMemeProvider(process.env.IMGFLIP_USERNAME || '', process.env.IMGFLIP_PASSWORD || '');
+const imgflipProvider = new ImgflipMemeProvider(process.env.IMGFLIP_USERNAME || '', process.env.IMGFLIP_PASSWORD || '');
+const googleProvider = new GoogleImageProvider(process.env.GOOGLE_SEARCH_API_KEY || '', process.env.GOOGLE_SEARCH_CX || '');
 
 const imageProviders: Record<string, IImageProvider> = {
   pexels: pexelsProvider,
   klipy: klipyProvider,
   reddit: redditProvider,
-  // imgflip: imgflipProvider
+  imgflip: imgflipProvider,
+  google: googleProvider
 };
 
 // Default Image Provider for Orchestrator (used for automatic flow)
