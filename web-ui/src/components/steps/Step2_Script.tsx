@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Plus, Trash2, GripVertical, AlertCircle } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { ScriptSegment } from '@/types';
 
 interface Step2Props {
@@ -43,6 +43,22 @@ const AutoResizeTextarea = ({
   );
 };
 
+// Reusable Inserter Component for gaps
+const Inserter = ({ onClick, height = "h-12" }: { onClick: () => void, height?: string }) => (
+  <div 
+    className={`${height} relative flex items-center justify-center group cursor-pointer z-10`}
+    onClick={onClick}
+  >
+    {/* Hover Line - Centered vertically */}
+    <div className="absolute w-full h-px bg-transparent group-hover:bg-purple-500/50 transition-colors"></div>
+    
+    {/* Button - Scaled and Centered */}
+    <div className="z-20 bg-zinc-900 border border-zinc-800 text-zinc-500 group-hover:text-white group-hover:border-purple-500 rounded-full p-2 shadow-xl opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-200">
+      <Plus className="w-6 h-6" />
+    </div>
+  </div>
+);
+
 export default function Step2_Script({ script, setScript, topic, setTopic }: Step2Props) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -52,7 +68,6 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
     setScript(newScript);
   };
 
-  // 특정 인덱스 뒤에 추가 (index가 -1이면 맨 앞에 추가)
   const handleAddSegment = (index: number) => {
     const newScript = [...script];
     newScript.splice(index + 1, 0, { text: '', imageKeyword: '' });
@@ -75,9 +90,6 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-    
-    // Optional: Add visual feedback logic here
   };
 
   const handleDrop = (index: number) => {
@@ -92,7 +104,7 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-4 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-3xl mx-auto pt-6 pb-16 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Title Editor */}
       <div className="space-y-2">
@@ -105,32 +117,29 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
         />
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-0">
         {/* Helper Tip */}
-        <div className="flex items-center gap-2 text-sm text-zinc-500 bg-zinc-900/30 w-full px-4 py-3 rounded-xl border border-zinc-800/30">
-          <span className="font-semibold text-zinc-400">💡 Tip</span>
-          <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
-          <span>줄바꿈을 하면 자막도 줄바꿈됩니다. 문장이 길면 자동으로 나뉩니다.</span>
+        <div className="text-sm text-zinc-500 bg-zinc-900/30 w-full px-4 py-3 rounded-xl border border-zinc-800/30 mb-4">
+          <div className="flex gap-3">
+            <span className="font-semibold text-zinc-400 shrink-0 mt-0.5">Tip</span>
+            <div className="flex flex-col gap-1.5 text-zinc-500 font-medium">
+              <p>줄바꿈을 하면 자막도 줄바꿈됩니다. 문장이 길면 자동으로 나뉩니다.</p>
+              <p>강조할 단어는 <strong className="text-zinc-300">[대괄호]</strong>로 묶어주세요. (예: [중요]한 내용)</p>
+            </div>
+          </div>
         </div>
 
         {/* Script Editor List */}
-        <div className="space-y-0"> {/* Remove gap for better inserter UX */}
+        <div className="flex flex-col">
           
-          {/* Top Inserter */}
-          <div className="h-4 -my-2 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-10 relative group cursor-pointer"
-               onClick={() => handleAddSegment(-1)}>
-            <div className="w-full h-0.5 bg-purple-500/50 group-hover:bg-purple-500 transition-colors absolute"></div>
-            <div className="bg-purple-600 text-white rounded-full p-1 shadow-lg transform scale-0 group-hover:scale-100 transition-transform">
-              <Plus className="w-4 h-4" />
-            </div>
-          </div>
+          <Inserter onClick={() => handleAddSegment(-1)} height="h-10" />
 
           {script.map((segment, index) => (
-            <div key={index} className="relative group/item">
+            <div key={index} className="flex flex-col">
               
               {/* Draggable Item */}
               <div 
-                className={`flex gap-6 items-start p-4 rounded-3xl transition-all duration-200 
+                className={`relative group/item flex gap-6 items-start p-6 rounded-3xl transition-all duration-200 cursor-grab active:cursor-grabbing z-0
                   ${draggedIndex === index ? 'opacity-50 scale-95 bg-zinc-800 border-dashed border-2 border-zinc-600' : 'bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'}`}
                 draggable
                 onDragStart={() => handleDragStart(index)}
@@ -138,14 +147,11 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
                 onDrop={() => handleDrop(index)}
               >
                 
-                {/* Number & Drag Handle */}
-                <div className="flex flex-col items-center pt-2 gap-2">
-                  <span className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-sm font-bold text-zinc-400 shadow-sm select-none">
+                {/* Number */}
+                <div className="flex flex-col items-center pt-1.5">
+                  <span className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-zinc-400 shadow-sm select-none">
                     {index + 1}
                   </span>
-                  <div className="text-zinc-600 hover:text-zinc-300 cursor-grab active:cursor-grabbing p-1 transition-colors" title="드래그하여 순서 변경">
-                    <GripVertical className="w-5 h-5" />
-                  </div>
                 </div>
 
                 {/* Editor Box */}
@@ -153,49 +159,31 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
                   <AutoResizeTextarea
                     value={segment.text}
                     onChange={(e) => handleTextChange(index, e.target.value)}
-                    className="w-full bg-transparent border-none focus:outline-none text-xl resize-none text-zinc-100 placeholder:text-zinc-600 leading-relaxed min-h-[40px] py-2"
+                    className="w-full bg-transparent border-none focus:outline-none text-lg resize-none text-zinc-100 placeholder:text-zinc-600 leading-relaxed min-h-[40px] py-1 font-medium"
                     placeholder="내레이션 내용을 입력하세요..."
                   />
                   
-                  {/* Delete Button (Visible on hover) */}
+                  {/* Delete Button */}
                   <div className="absolute -right-2 top-0 opacity-0 group-hover/item:opacity-100 transition-all duration-200">
                     <button 
-                      onClick={() => handleDeleteSegment(index)}
-                      className="p-2 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSegment(index);
+                      }}
+                      className="p-2 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                       title="삭제"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Inserter (Except for last item, which uses the big button) */}
-              {index < script.length - 1 && (
-                <div 
-                  className="h-6 -my-3 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-10 relative group/inserter cursor-pointer"
-                  onClick={() => handleAddSegment(index)}
-                >
-                  <div className="w-full h-0.5 bg-purple-500/30 group-hover/inserter:bg-purple-500 transition-colors absolute"></div>
-                  <div className="bg-zinc-900 border border-purple-500/50 text-purple-400 rounded-full p-1 shadow-lg transform scale-0 group-hover/inserter:scale-100 transition-transform">
-                    <Plus className="w-3 h-3" />
-                  </div>
-                </div>
-              )}
+              {/* Bottom Inserter - Centered in the expanded gap */}
+              <Inserter onClick={() => handleAddSegment(index)} height="h-6" />
             </div>
           ))}
         </div>
-        
-        {/* Big Add Button at bottom */}
-        <button
-          onClick={() => handleAddSegment(script.length - 1)}
-          className="w-full py-4 mt-4 border-2 border-dashed border-zinc-800/50 rounded-2xl text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900/30 transition-all flex items-center justify-center gap-2 font-medium group"
-        >
-          <div className="p-1.5 rounded-full bg-zinc-800/50 group-hover:bg-zinc-800 transition-colors">
-            <Plus className="w-4 h-4" />
-          </div>
-          마지막에 문단 추가하기
-        </button>
       </div>
     </div>
   );

@@ -70,7 +70,10 @@ export class SubtitleGenerator implements ISubtitleGenerator {
 
     for (const word of words) {
       const testLine = currentLine ? `${currentLine} ${word}` : word;
-      const testWidth = ctx.measureText(testLine).width;
+      
+      // ASS 태그 제거 후 너비 측정 (e.g. {\c&H...&} 제거)
+      const cleanLine = testLine.replace(/\{.*?\}/g, '');
+      const testWidth = ctx.measureText(cleanLine).width;
 
       if (testWidth > maxWidth) {
         // 현재 줄이 비어있지 않으면 줄바꿈
@@ -79,9 +82,11 @@ export class SubtitleGenerator implements ISubtitleGenerator {
           currentLine = word;
         }
 
-        // 단어 자체가 너무 긴 경우 글자 단위로 분할
-        const wordWidth = ctx.measureText(word).width;
+        // 단어 자체가 너무 긴 경우 글자 단위로 분할 (태그 고려 필요하지만 일단 단순화)
+        const cleanWord = word.replace(/\{.*?\}/g, '');
+        const wordWidth = ctx.measureText(cleanWord).width;
         if (wordWidth > maxWidth) {
+          // ... (이후 생략)
           // 현재 줄에 내용이 있으면 저장
           if (currentLine && currentLine !== word) {
             lines.push(currentLine);
@@ -243,8 +248,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     const maxChars = this.config.maxCharsPerLine || 15;
     const body = events
       .map((event, index) => {
+        // 1. 강조 문법 처리: [텍스트] -> {\c&H00FFFF&}텍스트{\c&HFFFFFF&} (노란색 강조)
+        // 주의: wrapText 이전에 처리해야 픽셀 너비 계산이 정확함 (태그 제외 너비 계산 필요)
+        const processedText = event.text.replace(/\[(.*?)\]/g, '{\\c&H00FFFF&}$1{\\c&HFFFFFF&}');
+        
         // 텍스트 자동 줄바꿈 처리
-        const wrappedText = this.wrapText(event.text, maxChars);
+        // wrapText 내부에서 ASS 태그를 무시하고 너비를 계산하도록 wrapTextByPixelWidth를 수정해야 할 수도 있음
+        const wrappedText = this.wrapText(processedText, maxChars);
         
         // 이벤트 전체 길이를 ms 단위로 계산
         const eventDurationMs = Math.floor((event.end - event.start) * 1000);
