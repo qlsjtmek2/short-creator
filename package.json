@@ -7,8 +7,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "start": "npm run wyr",
-    "wyr": "ts-node src/cli-wyr.ts",
+    "start": "npm run server",
     "story": "ts-node src/cli-story.ts",
     "server": "ts-node src/server/index.ts",
     "clean": "rm -rf output/images/* output/memes/* output/audio/* output/frames/* output/videos/* output/subtitles/*",

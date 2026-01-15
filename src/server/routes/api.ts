@@ -102,22 +102,41 @@ const OUTPUT_DIR = path.resolve(process.cwd(), 'output');
 // --- Routes ---
 
 // 1. 대본 생성 (Draft Script)
+
 router.post('/draft', async (req, res) => {
+
   try {
-    const { topic } = req.body;
+
+    const { topic, options } = req.body;
+
     console.log(`📝 Generating draft script for topic: ${topic}`);
 
+    if (options) console.log(`   Options: ${JSON.stringify(options)}`);
+
+    
+
     if (!topic) {
+
       return res.status(400).json({ error: 'Topic is required' });
+
     }
 
-    const script: StoryScript = await storyGenerator.generateStory(topic);
+
+
+    const script: StoryScript = await storyGenerator.generateStory(topic, options);
+
+    
 
     // 프론트엔드 포맷에 맞게 변환
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const formattedScript = script.sentences.map((s: any) => ({
+
       text: s.text,
-      imageKeyword: s.keyword,
+
+      imageKeyword: s.keyword
+
     }));
 
     res.json({

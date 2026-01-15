@@ -13,8 +13,8 @@ export interface DraftResponse {
   script: ScriptSegment[];
 }
 
-export const generateDraft = async (topic: string): Promise<DraftResponse> => {
-  const response = await api.post('/draft', { topic });
+export const generateDraft = async (topic: string, options?: any): Promise<DraftResponse> => {
+  const response = await api.post('/draft', { topic, options });
   return response.data;
 };
 

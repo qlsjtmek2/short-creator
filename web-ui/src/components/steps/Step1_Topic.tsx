@@ -84,7 +84,21 @@ export default function Step1_Topic({
     if (!topic) return;
     setLoading(true, 'Gemini가 대본을 작성하고 있습니다...');
     try {
-      const res = await generateDraft(topic);
+      // 설정 로드
+      let options = {};
+      const savedSettings = localStorage.getItem('shorts-creator-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        options = {
+          modelName: parsed.geminiModel,
+          systemPrompt: parsed.systemPrompt,
+          userPromptTemplate: parsed.userPromptTemplate,
+          titleMaxLength: parsed.titleMaxLength,
+          tone: parsed.tone
+        };
+      }
+
+      const res = await generateDraft(topic, options);
       onNext(res.topic, res.script);
     } catch (error) {
       console.error(error);
