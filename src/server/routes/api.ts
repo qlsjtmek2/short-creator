@@ -214,4 +214,17 @@ router.get('/status/:jobId', (req, res) => {
   res.json(status);
 });
 
+// 5. 서버 설정 상태 조회 (Config Check)
+router.get('/config', (req, res) => {
+  res.json({
+    gemini: !!process.env.GEMINI_API_KEY,
+    pexels: !!process.env.PEXELS_API_KEY,
+    elevenlabs: !!process.env.ELEVENLABS_API_KEY,
+    google: !!process.env.GOOGLE_SEARCH_API_KEY && !!process.env.GOOGLE_SEARCH_CX,
+    klipy: !!process.env.KLIPY_API_KEY,
+    typecast: !!process.env.TYPECAST_API_KEY,
+    imgflip: !!process.env.IMGFLIP_USERNAME && !!process.env.IMGFLIP_PASSWORD,
+  });
+});
+
 export default router;

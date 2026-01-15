@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Image as ImageIcon, Search, Film, Smile, Settings as SettingsIcon, Key, Zap } from 'lucide-react';
+import { X, Save, Image as ImageIcon, Search, Film, Smile, Settings as SettingsIcon, Key, Zap, Check, AlertCircle } from 'lucide-react';
+import { checkServerConfig } from '@/lib/api';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -22,11 +23,9 @@ const GEMINI_MODELS = [
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'keys' | 'advanced'>('general');
+  const [serverConfig, setServerConfig] = useState<Record<string, boolean>>({});
   const [settings, setSettings] = useState({
-    // General
     defaultProvider: 'pexels',
-    
-    // API Keys
     geminiKey: '',
     pexelsKey: '',
     elevenLabsKey: '',
@@ -37,23 +36,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     typecastActorId: '',
     imgflipUsername: '',
     imgflipPassword: '',
-    
-    // Advanced
     geminiModel: 'gemini-1.5-flash',
     systemPrompt: '당신은 유튜브 쇼츠 대본 작가입니다. 흥미롭고 자극적인 내용을 짧고 굵게 작성하세요.',
   });
 
   useEffect(() => {
+    // 1. Load Local Settings
     const savedSettings = localStorage.getItem('shorts-creator-settings');
     if (savedSettings) {
       setSettings(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
     }
-  }, []);
+
+    // 2. Check Server Config
+    if (isOpen) {
+      checkServerConfig().then(setServerConfig).catch(console.error);
+    }
+  }, [isOpen]);
 
   const handleSave = () => {
     localStorage.setItem('shorts-creator-settings', JSON.stringify(settings));
     onClose();
-    // alert('설정이 저장되었습니다.'); // 너무 자주 떠서 제거하거나 Toast로 대체 권장
   };
 
   if (!isOpen) return null;
@@ -71,6 +73,17 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       {label}
     </button>
   );
+
+  // Status Badge Component
+  const StatusBadge = ({ is configured, label = 'Server Configured' }: { is: boolean, label?: string }) => {
+    if (!configured) return null;
+    return (
+      <span className="flex items-center gap-1 text-[10px] text-green-400 bg-green-400/10 px-2 py-0.5 rounded border border-green-400/20">
+        <Check className="w-3 h-3" />
+        {label}
+      </span>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -139,54 +152,73 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-2">AI & Search</h3>
                 
                 <div className="space-y-2">
-                  <label className="text-sm text-zinc-300">Gemini API Key <span className="text-red-400">*</span></label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm text-zinc-300">Gemini API Key</label>
+                    <StatusBadge is={serverConfig.gemini} />
+                  </div>
                   <input 
                     type="password" 
                     value={settings.geminiKey}
                     onChange={e => setSettings({...settings, geminiKey: e.target.value})}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                    placeholder="AI Studio API Key"
+                    placeholder={serverConfig.gemini ? "서버 환경변수 사용 중 (.env)" : "API Key를 입력하세요"}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300">Pexels API Key</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm text-zinc-300">Pexels API Key</label>
+                      <StatusBadge is={serverConfig.pexels} label="Env" />
+                    </div>
                     <input 
                       type="password" 
                       value={settings.pexelsKey}
                       onChange={e => setSettings({...settings, pexelsKey: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder={serverConfig.pexels ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300">Klipy API Key</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm text-zinc-300">Klipy API Key</label>
+                      <StatusBadge is={serverConfig.klipy} label="Env" />
+                    </div>
                     <input 
                       type="password" 
                       value={settings.klipyKey}
                       onChange={e => setSettings({...settings, klipyKey: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder={serverConfig.klipy ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300">Google Search Key</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm text-zinc-300">Google Search Key</label>
+                      <StatusBadge is={serverConfig.google} label="Env" />
+                    </div>
                     <input 
                       type="password" 
                       value={settings.googleSearchKey}
                       onChange={e => setSettings({...settings, googleSearchKey: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder={serverConfig.google ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300">Google Search CX</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm text-zinc-300">Google Search CX</label>
+                      <StatusBadge is={serverConfig.google} label="Env" />
+                    </div>
                     <input 
                       type="text" 
                       value={settings.googleSearchCx}
                       onChange={e => setSettings({...settings, googleSearchCx: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder={serverConfig.google ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
                 </div>
@@ -197,32 +229,44 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-2">TTS (Voice)</h3>
                 
                 <div className="space-y-2">
-                  <label className="text-sm text-zinc-300">ElevenLabs API Key</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm text-zinc-300">ElevenLabs API Key</label>
+                    <StatusBadge is={serverConfig.elevenlabs} label="Env" />
+                  </div>
                   <input 
                     type="password" 
                     value={settings.elevenLabsKey}
                     onChange={e => setSettings({...settings, elevenLabsKey: e.target.value})}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                    placeholder={serverConfig.elevenlabs ? "서버 값 사용 중" : "입력 필요"}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300">Typecast API Key</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm text-zinc-300">Typecast API Key</label>
+                      <StatusBadge is={serverConfig.typecast} label="Env" />
+                    </div>
                     <input 
                       type="password" 
                       value={settings.typecastKey}
                       onChange={e => setSettings({...settings, typecastKey: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder={serverConfig.typecast ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300">Typecast Actor ID</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm text-zinc-300">Typecast Actor ID</label>
+                      <StatusBadge is={serverConfig.typecast} label="Env" />
+                    </div>
                     <input 
                       type="text" 
                       value={settings.typecastActorId}
                       onChange={e => setSettings({...settings, typecastActorId: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder={serverConfig.typecast ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
                 </div>
@@ -234,21 +278,29 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300">Imgflip Username</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm text-zinc-300">Imgflip Username</label>
+                      <StatusBadge is={serverConfig.imgflip} label="Env" />
+                    </div>
                     <input 
                       type="text" 
                       value={settings.imgflipUsername}
                       onChange={e => setSettings({...settings, imgflipUsername: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder={serverConfig.imgflip ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300">Imgflip Password</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm text-zinc-300">Imgflip Password</label>
+                      <StatusBadge is={serverConfig.imgflip} label="Env" />
+                    </div>
                     <input 
                       type="password" 
                       value={settings.imgflipPassword}
                       onChange={e => setSettings({...settings, imgflipPassword: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder={serverConfig.imgflip ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
                 </div>

@@ -32,3 +32,8 @@ export const checkJobStatus = async (jobId: string): Promise<JobStatus> => {
   const response = await api.get(`/status/${jobId}`);
   return response.data;
 };
+
+export const checkServerConfig = async () => {
+  const response = await api.get('/config');
+  return response.data as Record<string, boolean>;
+};
