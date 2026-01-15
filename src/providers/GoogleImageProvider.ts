@@ -64,6 +64,13 @@ export class GoogleImageProvider implements IImageProvider {
       console.log(`⏳ Downloading image from Google: ${imageUrl}`);
       const response = await axios.get(imageUrl, {
         responseType: 'arraybuffer',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+          'Referer': 'https://www.google.com/',
+        },
+        timeout: 30000,
       });
 
       // 확장자 추출 (URL이나 Content-Type에서)

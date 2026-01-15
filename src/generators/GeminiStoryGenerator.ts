@@ -11,6 +11,8 @@ export interface StoryGenerationOptions {
   systemPrompt?: string;
   userPromptTemplate?: string;
   titleMaxLength?: number;
+  sentenceCount?: number;
+  sentenceMaxLength?: number;
   tone?: string;
   temperature?: number;
 }
@@ -44,6 +46,8 @@ export class GeminiStoryGenerator implements IStoryGenerator {
 
     // 2. 프롬프트 구성
     const titleMaxLength = options?.titleMaxLength || this.promptConfig.titleMaxLength;
+    const sentenceCount = options?.sentenceCount || parseInt(this.promptConfig.sentenceCount);
+    const sentenceMaxLength = options?.sentenceMaxLength || this.promptConfig.sentenceMaxLength;
     const tone = options?.tone || 'humorous';
     
     // 톤에 따른 지시사항 추가
@@ -82,8 +86,8 @@ export class GeminiStoryGenerator implements IStoryGenerator {
     const prompt = promptTemplate
       .replace('{topic}', topic)
       .replace('{titleMaxLength}', titleMaxLength.toString())
-      .replace('{sentenceCount}', this.promptConfig.sentenceCount)
-      .replace('{sentenceMaxLength}', this.promptConfig.sentenceMaxLength.toString())
+      .replace('{sentenceCount}', sentenceCount.toString())
+      .replace('{sentenceMaxLength}', sentenceMaxLength.toString())
       .replace('{toneInstruction}', toneInstruction);
 
     // 시스템 프롬프트가 있다면 적용 (Gemini는 systemInstruction 옵션 지원)

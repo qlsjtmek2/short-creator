@@ -91,9 +91,12 @@ export default function Step1_Topic({
         const parsed = JSON.parse(savedSettings);
         options = {
           modelName: parsed.geminiModel,
+          temperature: parsed.temperature,
           systemPrompt: parsed.systemPrompt,
           userPromptTemplate: parsed.userPromptTemplate,
           titleMaxLength: parsed.titleMaxLength,
+          sentenceCount: parsed.sentenceCount,
+          sentenceMaxLength: parsed.sentenceMaxLength,
           tone: parsed.tone
         };
       }

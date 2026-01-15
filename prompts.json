@@ -26,6 +26,6 @@
     "tone": "시니컬, 유머러스, 음슴체, 커뮤니티 감성"
   },
   "geminiConfig": {
-    "modelName": "gemini-3-flash-preview"
+    "modelName": "gemini-3-pro-preview"
   }
 }
