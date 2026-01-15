@@ -69,4 +69,25 @@ export class PexelsImageProvider implements IImageProvider {
       throw error;
     }
   }
+
+  async searchImages(keyword: string, count: number = 4): Promise<string[]> {
+    console.log(`⏳ Searching images for preview: ${keyword} (count: ${count})`);
+    try {
+      const response = await axios.get('https://api.pexels.com/v1/search', {
+        params: {
+          query: keyword,
+          per_page: count,
+          orientation: 'portrait',
+        },
+        headers: { Authorization: this.apiKey },
+      });
+
+      const photos = response.data.photos || [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return photos.map((photo: any) => photo.src.large2x || photo.src.original);
+    } catch (error) {
+      console.error('Failed to search images from Pexels:', error);
+      return [];
+    }
+  }
 }

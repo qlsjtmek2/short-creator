@@ -270,4 +270,9 @@ export class ImgflipMemeProvider implements IMemeProvider, IImageProvider {
     this.usedTemplateIds.clear();
     console.log('  🔄 Reset used meme templates tracking');
   }
+
+  async searchImages(keyword: string, count: number = 4): Promise<string[]> {
+    console.log(`⚠️ Search not implemented for Imgflip, returning empty array.`);
+    return [];
+  }
 }

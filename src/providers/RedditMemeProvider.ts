@@ -201,4 +201,10 @@ export class RedditMemeProvider implements IMemeProvider, IImageProvider {
     this.usedMemeUrls.clear();
     console.log('  🔄 Reset used memes tracking');
   }
+
+  async searchImages(keyword: string, count: number = 4): Promise<string[]> {
+    console.log(`⚠️ Search not implemented for Reddit, returning random memes instead.`);
+    // Reddit API는 검색보다는 랜덤이 메인이므로, 여기서는 빈 배열 반환 후 추후 구현
+    return [];
+  }
 }

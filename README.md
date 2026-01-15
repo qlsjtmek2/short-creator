@@ -1,138 +1,80 @@
-# 🎬 AI 쇼츠 자동 생성기
+# Short Creator 🎬
 
-**AI를 활용하여 2가지 유형의 쇼츠 영상을 자동으로 생성하는 도구입니다.**
-1. **Would You Rather**: 밸런스 게임 질문 기반 분할 화면 쇼츠
-2. **스토리텔링**: 정보성 콘텐츠를 문장별 이미지 시퀀스로 전달하는 쇼츠
+> **AI 기반 쇼츠 자동 생성기 (Interactive Director Mode 포함)**
+>
+> Gemini AI가 대본을 쓰고, Pexels가 이미지를 찾고, ElevenLabs가 목소리를 입혀 고퀄리티 쇼츠를 만듭니다.
 
-Gemini가 콘텐츠를 만들고, Pexels에서 이미지를 찾고, TTS로 음성을 입혀 60초 분량의 쇼츠 영상을 완성합니다.
+![Short Creator Banner](https://via.placeholder.com/800x200?text=Short+Creator)
 
 ## ✨ 주요 기능
 
-**공통 기능**:
-*   **🤖 콘텐츠 자동 생성**: Google Gemini AI가 한국어 콘텐츠를 무한 생성합니다.
-*   **🖼️ 이미지 자동 소싱**: 콘텐츠에 맞는 고화질 이미지를 Pexels에서 찾아옵니다.
-*   **🎙️ AI 음성 합성**: ElevenLabs, OpenAI, Typecast API 지원 (폴백 시스템)
-*   **🎥 고속 렌더링**: FFmpeg를 사용하여 1080x1920(9:16) FHD 영상을 빠르게 합성합니다.
-*   **📦 배치 생성**: 한 번의 명령으로 여러 개의 영상을 연속 생성할 수 있습니다.
+- **🤖 AI 대본 생성**: Google Gemini가 흥미로운 주제(미스터리, 밸런스 게임, 유머 등)로 대본을 작성합니다.
+- **🎨 Interactive Director Mode**: 웹 UI에서 대본을 직접 수정하고, 마음에 드는 짤방을 선택할 수 있습니다.
+- **🖼️ 자동 에셋 소싱**: 대본 키워드에 맞춰 Pexels(고화질), Reddit(밈)에서 이미지를 찾아옵니다.
+- **🎙️ 고품질 TTS**: ElevenLabs, Typecast를 지원하여 자연스러운 내레이션을 생성합니다.
+- **🎥 다이내믹 렌더링**: Ken Burns 효과(줌인), 팝업 자막, 배경음악이 포함된 1080x1920 영상을 생성합니다.
 
-**Would You Rather 전용**:
-*   **🎨 분할 화면**: Canvas를 활용한 빨강 vs 파랑 그라데이션 배경
+## 🚀 빠른 시작 (Interactive Mode)
 
-**스토리텔링 전용**:
-*   **📝 ASS 자막 애니메이션**: Pop-in + Scale Up 효과로 몰입감 향상
-*   **🎬 Ken Burns 효과**: 이미지를 서서히 확대하여 역동적인 비주얼 연출
-*   **🎞️ 레터박스 레이아웃**: 상/하단 검은색 레터박스 + 상단 고정 타이틀
-*   **⏱️ 자동 동기화**: 문장별 TTS 길이를 FFprobe로 측정하여 정확한 타이밍 보장
+가장 쉽고 강력한 방법은 웹 UI를 사용하는 것입니다.
 
----
-
-## 🚀 시작하기
-
-### 1. 필수 요구사항
-이 프로젝트를 실행하려면 다음 도구들이 설치되어 있어야 합니다.
-
-*   **Node.js** (v18 이상 권장)
-*   **FFmpeg** (영상 렌더링 필수)
-    *   macOS: `brew install ffmpeg`
-    *   Windows: [FFmpeg 다운로드](https://ffmpeg.org/download.html) 후 환경변수 등록
-
-### 2. 설치
-프로젝트를 클론하고 패키지를 설치합니다.
-
-```bash
-git clone https://github.com/qlsjtmek2/short-creator.git
-cd short-creator
-npm install
-```
-
-### 3. 환경 변수 설정
-`.env` 파일을 생성하고 API 키를 입력합니다.
-
+### 1. 환경 설정
+`.env.example` 파일을 복사하여 `.env`를 생성하고 API 키를 입력하세요.
 ```bash
 cp .env.example .env
+# .env 파일 편집 (GEMINI_API_KEY, PEXELS_API_KEY 필수)
 ```
 
-`.env` 파일 내용:
-```env
-# Google Gemini API (필수) - 질문 생성용
-GEMINI_API_KEY=your_gemini_api_key
-
-# Pexels API (필수) - 이미지 검색용
-PEXELS_API_KEY=your_pexels_api_key
-
-# ElevenLabs API (선택) - 고품질 AI 음성
-ELEVENLABS_API_KEY=your_elevenlabs_key
-ELEVENLABS_VOICE_ID=your_voice_id (옵션)
-
-# Typecast API (선택) - 한국어 특화 음성
-TYPECAST_API_KEY=your_typecast_key
+### 2. 백엔드 서버 실행
+API 서버를 실행하여 AI 및 렌더링 엔진을 대기시킵니다.
+```bash
+npm install
+npm run server
 ```
 
-*   **Gemini 키 발급**: [Google AI Studio](https://aistudio.google.com/)
-*   **Pexels 키 발급**: [Pexels API](https://www.pexels.com/api/)
-*   **ElevenLabs 키 발급**: [ElevenLabs](https://elevenlabs.io/)
+### 3. 프론트엔드 실행 (새 터미널)
+웹 인터페이스를 실행합니다.
+```bash
+cd web-ui
+npm install
+npm run dev
+```
+
+### 4. 접속
+브라우저에서 **[http://localhost:3000](http://localhost:3000)** 으로 접속하여 나만의 쇼츠를 만들어보세요!
 
 ---
 
-## 🎮 사용 방법
+## 💻 CLI 모드 사용법
 
-### Would You Rather 쇼츠 생성
-1개의 밸런스 게임 쇼츠를 생성합니다. 결과물은 `output/videos/`에 저장됩니다.
+터미널에서 바로 자동 생성할 수도 있습니다.
 
+### 스토리텔링 쇼츠 생성
 ```bash
-npm start
-# 또는
-npm run wyr
+npm run story -- --topic "세상에서 가장 무서운 장소"
 ```
+옵션:
+- `--image-provider`: `pexels` (기본), `reddit`, `imgflip`, `klipy`
+- `--count`: 생성할 영상 개수
 
-여러 개 생성:
+### 밸런스 게임(Would You Rather) 생성
 ```bash
 npm run wyr -- --count 5
-```
-
-### 스토리텔링 쇼츠 생성 (NEW!)
-기본 주제로 스토리텔링 쇼츠 1개 생성:
-```bash
-npm run story
-```
-
-커스텀 주제로 여러 개 생성:
-```bash
-npm run story -- --topic "우주의 신비" --count 3
-```
-
-**추천 주제 예시**:
-- "인류 역사상 가장 황당한 전쟁"
-- "우주에 관한 놀라운 사실"
-- "고대 문명의 미스터리"
-- "과학이 밝혀낸 신기한 현상"
-
-### 임시 파일 정리
-생성 과정에서 다운로드된 이미지, 오디오, 프레임 파일을 삭제합니다.
-
-```bash
-npm run clean
-```
-
-### 모듈별 테스트
-각 기능이 정상 동작하는지 개별적으로 테스트할 수 있습니다.
-
-```bash
-npm run test:generator  # Gemini 질문 생성 테스트
-npm run test:image      # Pexels 이미지 다운로드 테스트
-npm run test:frame      # Canvas 프레임 합성 테스트
-npm run test:video      # FFmpeg 영상 렌더링 테스트
 ```
 
 ---
 
 ## 🛠️ 기술 스택
 
-*   **언어**: TypeScript, Node.js
-*   **AI 모델**: Google Gemini Pro/Flash
-*   **미디어 처리**: Canvas (이미지), FFmpeg (비디오)
-*   **TTS**: ElevenLabs, Typecast (지원 예정)
-*   **CI/CD**: GitHub Actions
+- **Frontend**: Next.js 14, Tailwind CSS, Lucide Icons
+- **Backend**: Node.js, Express
+- **AI**: Google Gemini Pro
+- **Media**: FFmpeg, Canvas, Pexels API, ElevenLabs API
+
+## 📂 결과물
+생성된 영상은 `output/videos/` 폴더에 저장됩니다.
+
+---
 
 ## 📝 라이선스
-MIT License
+ISC

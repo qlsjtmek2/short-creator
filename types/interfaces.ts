@@ -19,10 +19,17 @@ export interface IQuestionGenerator {
  */
 export interface IImageProvider {
   /**
-   * 키워드로 이미지를 검색하고 로컬에 저장한 뒤 파일 경로를 반환합니다.
-   * @param keyword 검색할 이미지 키워드
+   * 키워드로 이미지를 검색하고 로컬에 다운로드한 후 파일 경로를 반환합니다.
+   * @param keyword 검색 키워드
    */
   downloadImage(keyword: string): Promise<string>;
+
+  /**
+   * 키워드로 이미지를 검색하여 URL 목록을 반환합니다. (다운로드 X)
+   * @param keyword 검색 키워드
+   * @param count 검색할 이미지 수
+   */
+  searchImages(keyword: string, count?: number): Promise<string[]>;
 }
 
 /**

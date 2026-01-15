@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import axios from 'axios';
 import {
   IStoryGenerator,
   IImageProvider,
@@ -30,10 +31,7 @@ export class StoryOrchestrator {
   ) {}
 
   /**
-   * 주제를 받아 스토리텔링 쇼츠를 생성합니다.
-   * @param topic 스토리 주제
-   * @param outputDir 출력 디렉토리
-   * @returns 생성된 영상 파일 경로
+   * 주제를 받아 스토리텔링 쇼츠를 생성합니다. (CLI 모드)
    */
   async generateStoryShorts(topic: string, outputDir: string): Promise<string> {
     console.log(`\n📖 Generating story shorts for topic: "${topic}"`);
@@ -47,7 +45,7 @@ export class StoryOrchestrator {
 
     // 2. 각 문장별 병렬 처리 (이미지 + TTS)
     console.log(
-      '2️⃣ Downloading images and generating TTS for each sentence...',
+      '2️⃣ Downloading images and generating TTS for each sentence...', 
     );
     const sentencesWithAssets = await Promise.all(
       script.sentences.map(async (sentence, index) => {
@@ -109,6 +107,80 @@ export class StoryOrchestrator {
 
     console.log('✅ All assets downloaded and TTS generated');
 
+    // 공통 렌더링 파이프라인 호출
+    return this._processPostAssets(script, sentencesWithAssets, outputDir);
+  }
+
+  /**
+   * (Interactive Mode) 확정된 대본과 선택된 이미지 URL로 영상을 생성합니다.
+   */
+  async generateStoryFromAssets(
+    title: string,
+    segments: { text: string; imageKeyword: string }[],
+    imageUrls: string[],
+    outputDir: string
+  ): Promise<string> {
+    console.log(`\n🎬 Generating interactive story shorts: "${title}"`);
+
+    // 1. 대본 구조 복원
+    const script = {
+        title,
+        sentences: segments.map((s, i) => ({
+            text: s.text,
+            keyword: s.imageKeyword
+        }))
+    };
+
+    // 2. 각 문장별 병렬 처리 (이미지 다운로드 + TTS)
+    console.log('2️⃣ Downloading selected images and generating TTS...');
+    const sentencesWithAssets = await Promise.all(
+      script.sentences.map(async (sentence, index) => {
+        const imageUrl = imageUrls[index];
+        const uniqueId = `${Date.now()}_${index}`;
+        
+        // 2-1. 이미지 다운로드 (URL -> 파일)
+        const imagePath = path.join(outputDir, 'images', `interactive_${uniqueId}.jpg`);
+        const imageDir = path.dirname(imagePath);
+        if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir, { recursive: true });
+
+        // URL에서 이미지 다운로드
+        console.log(`  - Downloading image for scene ${index + 1}: ${imageUrl}`);
+        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        fs.writeFileSync(imagePath, response.data);
+
+        // 2-2. TTS 생성 (기존 로직 사용)
+        const audioPath = path.join(outputDir, 'audio', `interactive_${uniqueId}.mp3`);
+        const audioDir = path.dirname(audioPath);
+        if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
+        
+        console.log(`  - Generating TTS for scene ${index + 1}`);
+        const generatedAudioPath = await this.ttsProvider.generateAudio(sentence.text, 'neutral');
+        fs.copyFileSync(generatedAudioPath, audioPath);
+
+        // 2-3. 길이 추출
+        const duration = await this.getAudioDuration(audioPath);
+
+        return {
+          ...sentence,
+          imagePath,
+          audioPath,
+          duration,
+        } as StorySentence;
+      })
+    );
+
+    // 공통 렌더링 파이프라인 호출
+    return this._processPostAssets(script, sentencesWithAssets, outputDir);
+  }
+
+  /**
+   * 에셋 준비 이후의 공통 렌더링 파이프라인 (타임스탬프 -> 자막 -> 렌더링)
+   */
+  private async _processPostAssets(
+    script: { title: string }, 
+    sentencesWithAssets: StorySentence[], 
+    outputDir: string
+  ): Promise<string> {
     // 3. 타임스탬프 계산
     console.log('3️⃣ Calculating timestamps...');
     let currentTime = 0;

@@ -1,8 +1,8 @@
 # Would You Rather 쇼츠 생성기 - 개발 Todolist
 
 > **생성일**: 2026-01-14
-> **수정일**: 2026-01-14 (기술 스택 변경: GPT -> Gemini)
-> **예상 기간**: 3일 (집중 개발)
+> **수정일**: 2026-01-15 (UI/UX 고도화 및 기능 확장)
+> **예상 기간**: 4일
 > **목표**: 한국어 Would You Rather 쇼츠 및 스토리텔링 정보 쇼츠 자동 생성 시스템 구축
 
 ---
@@ -85,185 +85,73 @@
 
 ## 🎯 Phase 13: 배치 생성 및 최적화
 - [x] CLI 인터페이스 구현 및 배치 생성 스크립트
-- [x] 10개 영상 배치 생성 테스트
+- [x] 10개 영상 생성 배치 테스트
 
 ## 🎯 Phase 14: 문서화 및 마무리
 - [x] README.md 및 사용 가이드 작성
 
----
-
 ## 🎯 Phase 15: 스토리텔링 쇼츠 고도화 (Advanced UI/UX) - [완료 ✅]
+- [x] 임팩트 있는 고딕체 폰트 확인
+- [x] `.ass` 파일 생성기 구현
+- [x] 자막 애니메이션 태그 적용
+- [x] 문장별 TTS 생성 및 길이 추출 로직
+- [x] 이미지 전환 효과 (Ken Burns) 필터 구현
+- [x] 스토리텔링형 대본 생성기 구현
 
-### 1. 자막 및 애니메이션 (ASS 자막 도입)
-- [x] 임팩트 있는 고딕체 폰트 확인 (Pretendard ExtraBold 활용)
-- [x] `.ass` 파일 생성기 (`SubtitleGenerator`) 구현
-- [x] 자막 애니메이션 태그 (Pop-in, Scale Up) 적용 및 테스트
+## 🎯 Phase 16: 레딧 짤방 문제 해결 (보류 - GUI 우선)
+- [ ] GIF 길이 제한 (-loop 1, -t 옵션)
+- [ ] 중복 밈 방지 (usedMemeUrls)
+- [ ] 키워드-서브레딧 매핑
+- [ ] Tenor GIF API 통합
 
-### 2. 오디오-비주얼 동기화 엔진
-- [x] 문장별 TTS 생성 및 정확한 길이(Duration) 추출 로직 (FFprobe 활용)
-- [x] 타임스탬프 기반 이미지-자막 매핑 데이터 구조 설계
-- [x] 상황별 키워드 추출 및 이미지 시퀀스 구성 (Gemini 프롬프트 고도화)
-
-### 3. 고도화된 영상 렌더링 (FFmpeg 필터)
-- [x] 이미지 전환 효과 (Ken Burns/Zoom-in) 필터 체인 구현
-- [x] 상/하단 레터박스(Drawbox) 및 상단 타이틀 합성 레이아웃 적용
-- [x] ASS 자막 오버레이 통합 렌더링
-
-### 4. 콘텐츠 엔진 확장
-- [x] 스토리텔링형 대본 생성을 위한 `GeminiStoryGenerator` 구현
-- [x] StoryOrchestrator로 독립 파이프라인 분리
-- [x] CLI 인터페이스 구현 (npm run story)
-
----
-
-## 🎯 Phase 16: 레딧 짤방 문제 해결 (2시간 25분) - [진행 중 🔄]
-
-> **목표**: Reddit 밈 사용 시 발생하는 문제 해결 (영상 길이, 중복, 키워드 매칭)
-> **생성일**: 2026-01-15
-
-### 문제 분석
-1. **영상이 6분+로 길어짐** ⭐ 최우선
-   - 원인: GIF 원본 애니메이션 길이가 TTS 길이를 무시
-   - 해결: FFmpeg 입력에 `-loop 1` 및 `-t <duration>` 옵션 추가
-2. **똑같은 짤이 반복됨**
-   - 원인: 중복 추적 메커니즘 없음
-   - 해결: `usedMemeUrls` Set으로 세션별 중복 방지
-3. **짤이 적재적소로 안 찾아짐**
-   - 원인: Reddit API가 키워드 검색 미지원 (랜덤만 제공)
-   - 해결: 키워드→서브레딧 매핑 + Tenor API 통합
+## 🎯 Phase 17: Interactive Director Mode (GUI 구축) - [완료 ✅]
+- [x] Backend API Layer 구축 (Express)
+- [x] Frontend Setup (Next.js)
+- [x] Script Editor UI (Step 1)
+- [x] Asset Selector UI (Step 2)
+- [x] Preview & Render UI (Step 3)
+- [x] Rendering Logic Refactoring
 
 ---
 
-### Phase 16-1: GIF 길이 제한 (15분) ⭐ 최우선
-- [ ] `src/renderers/FFmpegStoryRenderer.ts` 파일 읽기
-- [ ] 이미지 입력 로직 찾기 (Line 124-127)
-- [ ] `-loop 1` 옵션 추가하여 정적 이미지 반복 가능하게
-- [ ] `-t <duration>` 옵션 추가하여 GIF 원본 길이 무시
-- [ ] 변경사항 저장
-- [ ] 테스트: Reddit 밈으로 스토리 생성 (`npm run story -- --image-provider reddit`)
-- [ ] 영상 길이가 60초 이내인지 확인
+## 🎯 Phase 18: UI/UX 고도화 및 기능 확장 (Interactive Mode V2) ⭐ NEW
 
-**예상 효과**:
-- GIF가 30초여도 TTS가 3초면 3초만 사용
-- 총 영상 길이 = TTS 길이 합 (정확히 제어됨)
+> **목표**: 사용성을 대폭 개선하고 사용자 개입 범위를 확장 (Human-in-the-loop 강화)
+> **기술 스택**: Next.js, Tailwind CSS, LocalStorage
 
----
+### Phase 18-1: 메인 화면 (Step 1) 개선
+- [ ] 타이틀 변경: `Short Creator` (메타데이터 포함)
+- [ ] 레이아웃 변경: Step Indicator 제거, 중앙 집중형 심플 디자인
+- [ ] 주제 추천 기능: 카테고리별(공포, 유머, 지식, 밸런스, 미스터리 등) 칩 버튼 구현
+- [ ] 자동 완성: 추천 칩 클릭 시 입력창 자동 채움
 
-### Phase 16-2: 중복 밈 방지 (30분)
+### Phase 18-2: Sticky Header 및 네비게이션
+- [ ] Step 2부터 나타나는 상단 고정 헤더(Sticky Header) 구현
+- [ ] 헤더 내 기능: 진행 단계 표시, [이전]/[다음] 버튼, [설정] 아이콘
+- [ ] 설정 모달 구현 (API Key, 기본 Provider 설정 - LocalStorage 연동)
 
-#### RedditMemeProvider.ts 수정
-- [ ] `src/providers/RedditMemeProvider.ts` 파일 읽기
-- [ ] 클래스 필드 추가: `usedMemeUrls: Set<string>`, `maxRetries = 10`
-- [ ] `downloadRandomMeme()` 메서드를 while 루프로 변경
-- [ ] NSFW 필터링 후 중복 체크 로직 추가
-- [ ] 다운로드 성공 시 `usedMemeUrls.add(meme.url)` 추가
-- [ ] 최대 재시도 초과 시 에러 처리
-- [ ] `resetUsedMemes()` 메서드 추가
+### Phase 18-3: 대본 에디터 (Step 2) 강화
+- [ ] Narration 라벨 제거 및 UI 간소화
+- [ ] 키워드 수정 기능 제거 (Step 3로 이동)
+- [ ] 문단(Scene) 추가/삭제 기능 구현
+- [ ] 제목(Topic) 수정 기능 구현
+- [ ] 강조/줄바꿈 문법 힌트(Tooltip) 추가
 
-#### ImgflipMemeProvider.ts 수정
-- [ ] `src/providers/ImgflipMemeProvider.ts` 파일 읽기
-- [ ] 동일한 중복 방지 로직 적용 (`usedTemplateIds: Set<string>`)
-- [ ] 테스트: 여러 개 생성 (`npm run story -- --image-provider reddit --count 3`)
-- [ ] 중복 없이 고유한 밈이 사용되는지 확인
+### Phase 18-4: 짤방 선택 (Step 3) 고도화
+- [ ] 씬별 키워드 수정 UI 추가
+- [ ] 재검색(Refresh) 기능 구현: 수정된 키워드로 해당 씬만 짤방 다시 불러오기
+- [ ] 짤방 선택 UI 개선 (선택 효과 강화)
 
----
-
-### Phase 16-3: 키워드→서브레딧 매핑 (40분)
-
-- [ ] `src/providers/RedditMemeProvider.ts`에 매핑 테이블 추가
-  ```typescript
-  keywordToSubredditMap: {
-    science: ['science', 'Damnthatsinteresting'],
-    game: ['gaming', 'gamingmemes'],
-    food: ['food', 'foodporn'],
-    cat: ['catmemes', 'cats'],
-    default: ['memes', 'dankmemes']
-  }
-  ```
-- [ ] `downloadImage(keyword)` 메서드에 매핑 로직 구현
-- [ ] 키워드 소문자 변환 및 부분 매칭
-- [ ] 매칭 실패 시 기본 서브레딧 사용
-- [ ] 테스트: 다양한 키워드로 서브레딧 매핑 확인
-  - `npm run story -- --image-provider reddit --topic "우주의 신비"`
-  - `npm run story -- --image-provider reddit --topic "게임의 역사"`
-
----
-
-### Phase 16-4: Tenor GIF API 통합 (60분)
-
-#### TenorMemeProvider 생성
-- [ ] `src/providers/TenorMemeProvider.ts` 파일 생성
-- [ ] `IImageProvider` 인터페이스 구현
-- [ ] Tenor Search API 호출 로직 작성
-- [ ] 키워드 기반 GIF 검색 구현
-- [ ] 중복 방지 로직 추가 (`usedGifUrls: Set<string>`)
-- [ ] GIF 다운로드 및 저장
-- [ ] `resetUsedMemes()` 메서드 추가
-
-#### CLI 통합
-- [ ] `src/cli-story.ts` 파일 읽기
-- [ ] `--image-provider` 옵션에 'tenor' 추가
-- [ ] Tenor Provider 선택 로직 추가
-- [ ] TENOR_API_KEY 검증 로직 추가
-
-#### 설정 및 문서화
-- [ ] `.env.example`에 `TENOR_API_KEY=...` 추가
-- [ ] `.env`에 실제 API 키 추가 (https://tenor.com/developer/keyregistration)
-- [ ] `CLAUDE.md` 또는 `README.md`에 Tenor API 사용법 추가
-
----
-
-### Phase 16-5: 통합 테스트 및 검증
-
-#### GIF 길이 검증
-- [ ] Reddit 밈으로 스토리 생성
-- [ ] 영상 길이가 60초 이내인지 확인
-- [ ] FFmpeg 로그에서 `-t` 옵션 적용 확인
-
-#### 중복 방지 검증
-- [ ] 여러 개 생성하여 중복 없는지 확인
-- [ ] 로그에 "Duplicate meme detected" 메시지 확인
-
-#### 키워드 매핑 검증
-- [ ] 다양한 주제로 서브레딧 매핑 확인
-- [ ] 주제와 관련성 있는 밈이 다운로드되는지 확인
-
-#### Tenor API 검증
-- [ ] Tenor로 키워드 검색 테스트
-- [ ] GIF가 정상 렌더링되는지 확인
-- [ ] 키워드별로 다른 GIF 제공되는지 확인
-
-#### 통합 비교 테스트
-- [ ] 모든 Provider 비교 (`pexels`, `reddit`, `imgflip`, `tenor`)
-- [ ] 이미지 품질, 키워드 관련성, 영상 길이 일관성 비교
-
----
-
-- [x] 짤방 또는 Ai영상 사용하도록 하고
-- [x] 대본 잘 짜도록 만들게 하고
-- [x] 제목 짤린거 수정하고
-- [x] 글자 문장 끊기
-- [ ] 퀄리티 업
-- [ ] 대본, 짤 추천 기능으로 대본 수정하고 짤 선택하여 최종적으로 만들 수 있도록.
-- [ ] 효과음, 영상 효과 추가 기능
+### Phase 18-5: 설정 관리 (Settings)
+- [ ] API Key 설정 화면 (Gemini, Pexels, ElevenLabs 등)
+- [ ] 기본 짤방 소스 선택 (Pexels, Reddit, Tenor 등)
+- [ ] 설정값 LocalStorage 저장 및 불러오기 (새로고침 시 유지)
 
 ---
 
 ## 📊 진행 상황
 
 ### 전체 진행률
-- **완료**: Phase 1~15 완료
-- **진행 중**: Phase 16 (레딧 짤방 문제 해결)
-- **예상 소요 시간**: 2시간 25분
+- **완료**: Phase 1~15, 17 완료
+- **진행 중**: Phase 18 (UI/UX 고도화)
 
-### Phase 16 진행률
-- Phase 16-1: 0/7 (0%)
-- Phase 16-2: 0/13 (0%)
-- Phase 16-3: 0/6 (0%)
-- Phase 16-4: 0/11 (0%)
-- Phase 16-5: 0/13 (0%)
-
----
-
-**프로젝트 시작일**: 2026-01-14
-**상태**: 🟡 **Phase 16 진행 중 - 레딧 짤방 문제 해결**

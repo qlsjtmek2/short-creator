@@ -136,4 +136,9 @@ export class KlipyGIFProvider implements IImageProvider {
     this.usedGifUrls.clear();
     console.log('  🔄 Reset used GIFs tracking');
   }
+
+  async searchImages(keyword: string, count: number = 4): Promise<string[]> {
+    console.log(`⚠️ Search not implemented for Klipy, returning empty array.`);
+    return [];
+  }
 }
