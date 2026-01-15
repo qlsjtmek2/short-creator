@@ -100,7 +100,7 @@
       "startZoom": 1.0,
       "endZoom": 1.2,
       "zoomIncrement": 0.0001,
-      "fps": 30
+      "fps": 60
     },
     "audio": {
       "bgmPath": "assets/music/bgm2.mp3",

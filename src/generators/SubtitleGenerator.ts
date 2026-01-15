@@ -242,7 +242,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     const anim = this.config.animation;
     const maxChars = this.config.maxCharsPerLine || 15;
     const body = events
-      .map((event) => {
+      .map((event, index) => {
         // 텍스트 자동 줄바꿈 처리
         const wrappedText = this.wrapText(event.text, maxChars);
         
@@ -256,7 +256,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         const animatedText = `{\\fad(50,50)\\fscx${anim.scaleUpStart}\\fscy${anim.scaleUpStart}\\t(0,${anim.popInDuration},0.5,\\fscx${anim.scaleUpEnd}\\fscy${anim.scaleUpEnd})\\t(${anim.popInDuration},${eventDurationMs},\\fscx${anim.finalScale}\\fscy${anim.finalScale})}${wrappedText}`;
         
         const start = this.formatTime(event.start);
-        const end = this.formatTime(event.end);
+        
+        // 다음 자막과 자연스럽게 연결되도록 종료 시간을 50ms 연장 (오버랩)
+        // 마지막 자막은 연장하지 않음
+        const isLast = index === events.length - 1;
+        const endTime = isLast ? event.end : event.end + 0.05;
+        const end = this.formatTime(endTime);
+        
         return `Dialogue: 0,${start},${end},Default,,0,0,0,,${animatedText}`;
       })
       .join('\n');
