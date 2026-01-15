@@ -84,11 +84,9 @@ export default function ShortCreator() {
       {step > 1 && step < 4 && (
         <StickyHeader 
           step={step}
-          title={topic}
           onBack={() => setStep(step - 1)}
           onNext={step === 2 ? handleGoToAssets : handleStartRender}
           nextLabel={step === 2 ? '짤방 선택' : '영상 만들기'}
-          onOpenSettings={() => setIsSettingsOpen(true)}
         />
       )}
 
