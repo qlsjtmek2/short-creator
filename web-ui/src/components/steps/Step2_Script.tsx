@@ -90,6 +90,12 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    // Optional: Add visual indicator for drop target
+  };
+
+  const handleDragEnd = () => {
+    // 드래그가 끝나면 무조건 상태 초기화 (성공/취소 무관)
+    setDraggedIndex(null);
   };
 
   const handleDrop = (index: number) => {
@@ -144,6 +150,7 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
                 draggable
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd} // 드래그 종료 시 상태 초기화
                 onDrop={() => handleDrop(index)}
               >
                 
