@@ -84,17 +84,20 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
   };
 
   // Drag & Drop Handlers
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
+    // 드래그 이미지 설정 (선택적)
+    e.dataTransfer.effectAllowed = 'move';
+    
+    // 드래그 시 고스트 이미지를 깔끔하게 하기 위해 부모 요소를 투명하게 하거나 스타일링 할 수 있음
+    // 하지만 브라우저 기본 동작으로도 충분
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    // Optional: Add visual indicator for drop target
   };
 
   const handleDragEnd = () => {
-    // 드래그가 끝나면 무조건 상태 초기화 (성공/취소 무관)
     setDraggedIndex(null);
   };
 
@@ -143,20 +146,23 @@ export default function Step2_Script({ script, setScript, topic, setTopic }: Ste
           {script.map((segment, index) => (
             <div key={index} className="flex flex-col">
               
-              {/* Draggable Item */}
+              {/* Item Container */}
               <div 
-                className={`relative group/item flex gap-6 items-start p-6 rounded-3xl transition-all duration-200 cursor-grab active:cursor-grabbing z-0
+                className={`relative group/item flex gap-6 items-start p-6 rounded-3xl transition-all duration-200 z-0
                   ${draggedIndex === index ? 'opacity-50 scale-95 bg-zinc-800 border-dashed border-2 border-zinc-600' : 'bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'}`}
-                draggable
-                onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
-                onDragEnd={handleDragEnd} // 드래그 종료 시 상태 초기화
                 onDrop={() => handleDrop(index)}
               >
                 
-                {/* Number */}
-                <div className="flex flex-col items-center pt-1.5">
-                  <span className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-zinc-400 shadow-sm select-none">
+                {/* Drag Handle (Number Area) - Only this part is draggable */}
+                <div 
+                  className="flex flex-col items-center pt-1.5 cursor-grab active:cursor-grabbing hover:bg-zinc-800/50 rounded-lg p-1 -m-1 transition-colors"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  title="드래그하여 순서 변경"
+                >
+                  <span className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-zinc-400 shadow-sm select-none pointer-events-none">
                     {index + 1}
                   </span>
                 </div>
