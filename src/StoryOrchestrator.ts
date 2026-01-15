@@ -135,7 +135,7 @@ export class StoryOrchestrator {
     console.log('2️⃣ Downloading selected images and generating TTS...');
     const sentencesWithAssets = await Promise.all(
       script.sentences.map(async (sentence, index) => {
-        const imageUrl = imageUrls[index];
+        let imageUrl = imageUrls[index];
         const uniqueId = `${Date.now()}_${index}`;
 
         // 2-1. 이미지 다운로드 (URL -> 파일)
@@ -147,6 +147,30 @@ export class StoryOrchestrator {
         const imageDir = path.dirname(imagePath);
         if (!fs.existsSync(imageDir))
           fs.mkdirSync(imageDir, { recursive: true });
+
+        // imageUrl이 null이면 fallback 키워드로 재검색
+        if (!imageUrl) {
+          console.warn(
+            `⚠️ No image URL for scene ${index + 1} (keyword: ${sentence.keyword}), using fallback keyword "abstract art"`,
+          );
+          try {
+            const fallbackUrls = await this.imageProvider.searchImages(
+              'abstract art',
+              1,
+            );
+            if (fallbackUrls.length > 0) {
+              imageUrl = fallbackUrls[0];
+              console.log(`✅ Found fallback image: ${imageUrl}`);
+            } else {
+              throw new Error('No fallback images found');
+            }
+          } catch (fallbackError) {
+            console.error('❌ Failed to get fallback image:', fallbackError);
+            throw new Error(
+              `Cannot proceed without image for scene ${index + 1}`,
+            );
+          }
+        }
 
         // URL에서 이미지 다운로드
         console.log(

@@ -97,7 +97,7 @@ export default function Step1_Topic({
           titleMaxLength: parsed.titleMaxLength,
           sentenceCount: parsed.sentenceCount,
           sentenceMaxLength: parsed.sentenceMaxLength,
-          tone: parsed.tone
+          tone: parsed.tone,
         };
       }
 

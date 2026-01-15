@@ -81,23 +81,60 @@ export class PexelsImageProvider implements IImageProvider {
     console.log(
       `⏳ Searching images for preview: ${keyword} (count: ${count})`,
     );
-    try {
-      const response = await axios.get('https://api.pexels.com/v1/search', {
-        params: {
-          query: keyword,
-          per_page: count,
-          orientation: 'portrait',
-        },
-        headers: { Authorization: this.apiKey },
-      });
 
-      const photos = response.data.photos || [];
-      return photos.map(
-        (photo: PexelsPhoto) => photo.src.large2x || photo.src.original,
-      );
-    } catch (error) {
-      console.error('Failed to search images from Pexels:', error);
-      return [];
+    // 검색 시도할 키워드 리스트 (원본 → 간단한 버전 → fallback)
+    const searchQueries = [
+      keyword,
+      // 언더스코어 제거 및 소문자화
+      keyword.replace(/_/g, ' ').toLowerCase(),
+      // 첫 단어만 사용
+      keyword.split('_')[0].toLowerCase(),
+      // 최후의 fallback
+      'abstract art',
+    ];
+
+    for (const query of searchQueries) {
+      try {
+        const response = await axios.get('https://api.pexels.com/v1/search', {
+          params: {
+            query,
+            per_page: count,
+            orientation: 'portrait',
+          },
+          headers: { Authorization: this.apiKey },
+        });
+
+        const photos = response.data.photos || [];
+
+        if (photos.length > 0) {
+          console.log(
+            `✅ Found ${photos.length} images for: "${query}" (original: ${keyword})`,
+          );
+          return photos.map(
+            (photo: PexelsPhoto) => photo.src.large2x || photo.src.original,
+          );
+        }
+
+        console.warn(
+          `⚠️ No images found for: "${query}", trying next keyword...`,
+        );
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error(
+            `❌ Pexels API Error for "${query}" (${error.response?.status}):`,
+            error.response?.data,
+          );
+        } else {
+          console.error(`Failed to search images for "${query}":`, error);
+        }
+        // 에러가 나도 다음 키워드 시도
+        continue;
+      }
     }
+
+    console.error(
+      `❌ Failed to find any images after trying all fallback keywords for: ${keyword}`,
+    );
+    return [];
   }
 }

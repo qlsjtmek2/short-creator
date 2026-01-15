@@ -13,7 +13,21 @@ export interface DraftResponse {
   script: ScriptSegment[];
 }
 
-export const generateDraft = async (topic: string, options?: any): Promise<DraftResponse> => {
+export interface StoryGenerationOptions {
+  modelName?: string;
+  systemPrompt?: string;
+  userPromptTemplate?: string;
+  titleMaxLength?: number;
+  sentenceCount?: number;
+  sentenceMaxLength?: number;
+  tone?: string;
+  temperature?: number;
+}
+
+export const generateDraft = async (
+  topic: string,
+  options?: StoryGenerationOptions,
+): Promise<DraftResponse> => {
   const response = await api.post('/draft', { topic, options });
   return response.data;
 };
