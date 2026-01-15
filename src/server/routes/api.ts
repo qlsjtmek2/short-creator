@@ -152,8 +152,14 @@ router.post('/assets', async (req, res) => {
 // 3. 렌더링 요청 (Render Video)
 router.post('/render', async (req, res) => {
   try {
-    const { topic, script, assetUrls } = req.body;
+    const { topic, script, assetUrls, mockTtsSpeed } = req.body;
     console.log(`🎬 Requesting render for "${topic}"`);
+
+    // MockTTSProvider 속도 설정
+    if (ttsProvider instanceof MockTTSProvider && mockTtsSpeed) {
+      console.log(`⚡ Setting Mock TTS speed to ${mockTtsSpeed}`);
+      ttsProvider.speed = Number(mockTtsSpeed);
+    }
 
     const jobId = `job-${Date.now()}`;
     

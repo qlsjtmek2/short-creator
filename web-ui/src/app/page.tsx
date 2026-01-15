@@ -77,7 +77,16 @@ export default function ShortCreator() {
     handleSetLoading(true, '영상 렌더링을 시작합니다...');
     try {
         const assetUrls = assets.map(group => group.selectedImage || group.images[0]);
-        const res = await renderVideo(topic, script, assetUrls);
+        
+        // 설정 로드
+        let mockTtsSpeed = 1.0;
+        const savedSettings = localStorage.getItem('shorts-creator-settings');
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          if (parsed.mockTtsSpeed) mockTtsSpeed = parsed.mockTtsSpeed;
+        }
+
+        const res = await renderVideo(topic, script, assetUrls, { mockTtsSpeed });
         setJobId(res.jobId);
         setStep(4);
     } catch (error) {

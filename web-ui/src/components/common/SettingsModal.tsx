@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Image as ImageIcon, Search, Film, Smile, Settings as SettingsIcon, Key, Zap, Check, AlertCircle } from 'lucide-react';
+import { X, Save, Image as ImageIcon, Search, Film, Smile, Settings as SettingsIcon, Key, Zap, Check } from 'lucide-react';
 import { checkServerConfig } from '@/lib/api';
 
 interface SettingsModalProps {
@@ -38,6 +38,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     imgflipPassword: '',
     geminiModel: 'gemini-1.5-flash',
     systemPrompt: '당신은 유튜브 쇼츠 대본 작가입니다. 흥미롭고 자극적인 내용을 짧고 굵게 작성하세요.',
+    mockTtsSpeed: 1.0,
   });
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   );
 
   // Status Badge Component
-  const StatusBadge = ({ is configured, label = 'Server Configured' }: { is: boolean, label?: string }) => {
+  const StatusBadge = ({ configured, label = 'Server Configured' }: { configured: boolean, label?: string }) => {
     if (!configured) return null;
     return (
       <span className="flex items-center gap-1 text-[10px] text-green-400 bg-green-400/10 px-2 py-0.5 rounded border border-green-400/20">
@@ -154,7 +155,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <label className="text-sm text-zinc-300">Gemini API Key</label>
-                    <StatusBadge is={serverConfig.gemini} />
+                    <StatusBadge configured={serverConfig.gemini} />
                   </div>
                   <input 
                     type="password" 
@@ -169,7 +170,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm text-zinc-300">Pexels API Key</label>
-                      <StatusBadge is={serverConfig.pexels} label="Env" />
+                      <StatusBadge configured={serverConfig.pexels} label="Env" />
                     </div>
                     <input 
                       type="password" 
@@ -182,7 +183,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm text-zinc-300">Klipy API Key</label>
-                      <StatusBadge is={serverConfig.klipy} label="Env" />
+                      <StatusBadge configured={serverConfig.klipy} label="Env" />
                     </div>
                     <input 
                       type="password" 
@@ -198,7 +199,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm text-zinc-300">Google Search Key</label>
-                      <StatusBadge is={serverConfig.google} label="Env" />
+                      <StatusBadge configured={serverConfig.google} label="Env" />
                     </div>
                     <input 
                       type="password" 
@@ -211,7 +212,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm text-zinc-300">Google Search CX</label>
-                      <StatusBadge is={serverConfig.google} label="Env" />
+                      <StatusBadge configured={serverConfig.google} label="Env" />
                     </div>
                     <input 
                       type="text" 
@@ -231,7 +232,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <label className="text-sm text-zinc-300">ElevenLabs API Key</label>
-                    <StatusBadge is={serverConfig.elevenlabs} label="Env" />
+                    <StatusBadge configured={serverConfig.elevenlabs} label="Env" />
                   </div>
                   <input 
                     type="password" 
@@ -246,7 +247,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm text-zinc-300">Typecast API Key</label>
-                      <StatusBadge is={serverConfig.typecast} label="Env" />
+                      <StatusBadge configured={serverConfig.typecast} label="Env" />
                     </div>
                     <input 
                       type="password" 
@@ -259,7 +260,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm text-zinc-300">Typecast Actor ID</label>
-                      <StatusBadge is={serverConfig.typecast} label="Env" />
+                      <StatusBadge configured={serverConfig.typecast} label="Env" />
                     </div>
                     <input 
                       type="text" 
@@ -269,6 +270,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       placeholder={serverConfig.typecast ? "서버 값 사용 중" : "입력 필요"}
                     />
                   </div>
+                </div>
+
+                {/* Mock TTS Speed */}
+                <div className="space-y-3 pt-4 border-t border-zinc-800">
+                  <div className="flex justify-between text-sm text-zinc-300">
+                    <label>Mock TTS Speed</label>
+                    <span className="font-mono text-purple-400">x{settings.mockTtsSpeed?.toFixed(1) || '1.0'}</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0.5" 
+                    max="3.0" 
+                    step="0.1" 
+                    value={settings.mockTtsSpeed || 1.0}
+                    onChange={e => setSettings({...settings, mockTtsSpeed: parseFloat(e.target.value)})}
+                    className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                  />
+                  <p className="text-xs text-zinc-500">
+                    * API 키가 없을 때 사용되는 가상 음성의 속도입니다. (1.0 = 표준)
+                  </p>
                 </div>
               </div>
 
@@ -280,7 +301,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm text-zinc-300">Imgflip Username</label>
-                      <StatusBadge is={serverConfig.imgflip} label="Env" />
+                      <StatusBadge configured={serverConfig.imgflip} label="Env" />
                     </div>
                     <input 
                       type="text" 
@@ -293,7 +314,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm text-zinc-300">Imgflip Password</label>
-                      <StatusBadge is={serverConfig.imgflip} label="Env" />
+                      <StatusBadge configured={serverConfig.imgflip} label="Env" />
                     </div>
                     <input 
                       type="password" 

@@ -23,8 +23,13 @@ export const searchAssets = async (keywords: string[], provider: string = 'pexel
   return response.data;
 };
 
-export const renderVideo = async (topic: string, script: ScriptSegment[], assetUrls: string[]) => {
-  const response = await api.post('/render', { topic, script, assetUrls });
+export const renderVideo = async (
+  topic: string, 
+  script: ScriptSegment[], 
+  assetUrls: string[],
+  options?: { mockTtsSpeed?: number }
+) => {
+  const response = await api.post('/render', { topic, script, assetUrls, ...options });
   return response.data;
 };
 
