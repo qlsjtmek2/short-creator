@@ -16,10 +16,11 @@ const PROVIDERS = [
 ];
 
 const GEMINI_MODELS = [
-  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (2026 Latest - Ultra Fast)' },
-  { id: 'gemini-2.0-pro', name: 'Gemini 2.0 Pro (2026 Latest - High Perf)' },
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro (Stable)' },
-  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Fast)' },
+  { id: 'gemini-3.0-pro', name: 'Gemini 3.0 Pro (High Perf)' },
+  { id: 'gemini-3.0-flash', name: 'Gemini 3.0 Flash (Fastest)' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Stable High)' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Balanced)' },
+  { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash-Lite (Efficient)' },
 ];
 
 const TONES = [
@@ -409,6 +410,25 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm text-zinc-300">
+                  <label>Temperature (창의성)</label>
+                  <span className="font-mono text-purple-400">{settings.temperature ?? 0.7}</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0.0" 
+                  max="1.0" 
+                  step="0.1" 
+                  value={settings.temperature ?? 0.7}
+                  onChange={e => setSettings({...settings, temperature: parseFloat(e.target.value)})}
+                  className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                />
+                <p className="text-xs text-zinc-500">
+                  * 높을수록 창의적이고 예측 불가능한 답변이 나옵니다. (0.0 ~ 1.0)
+                </p>
               </div>
 
               <div className="space-y-4">

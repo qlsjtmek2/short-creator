@@ -12,6 +12,7 @@ export interface StoryGenerationOptions {
   userPromptTemplate?: string;
   titleMaxLength?: number;
   tone?: string;
+  temperature?: number;
 }
 
 export class GeminiStoryGenerator implements IStoryGenerator {
@@ -28,9 +29,18 @@ export class GeminiStoryGenerator implements IStoryGenerator {
   async generateStory(topic: string, options?: StoryGenerationOptions): Promise<StoryScript> {
     // 1. 모델 선택 (옵션 > 설정파일 > 기본값)
     const modelName = options?.modelName || this.geminiConfig.modelName || 'gemini-pro';
-    const model = this.genAI.getGenerativeModel({ model: modelName });
+    
+    // Generation Config 설정
+    const generationConfig = {
+      temperature: options?.temperature ?? 0.7,
+    };
 
-    console.log(`🤖 Using Gemini Model: ${modelName}`);
+    const model = this.genAI.getGenerativeModel({ 
+      model: modelName,
+      generationConfig
+    });
+
+    console.log(`🤖 Using Gemini Model: ${modelName} (Temp: ${generationConfig.temperature})`);
 
     // 2. 프롬프트 구성
     const titleMaxLength = options?.titleMaxLength || this.promptConfig.titleMaxLength;
