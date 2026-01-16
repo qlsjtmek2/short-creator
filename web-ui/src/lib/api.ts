@@ -69,3 +69,10 @@ export const checkServerConfig = async () => {
   const response = await api.get('/config');
   return response.data as Record<string, boolean>;
 };
+
+export const fetchRecommendedTopics = async (): Promise<
+  { category: string; text: string }[]
+> => {
+  const response = await api.get('/recommend');
+  return response.data.topics;
+};

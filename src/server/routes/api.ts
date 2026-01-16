@@ -136,6 +136,80 @@ router.post('/draft', async (req, res) => {
   }
 });
 
+// 1.5 추천 주제 생성 (Recommend Topics)
+router.get('/recommend', async (req, res) => {
+  try {
+    console.log('💡 Generating recommended topics...');
+    
+    // 무작위성을 위한 테마 풀 (25개)
+    const THEMES = [
+      '미스터리', '공포/괴담', '역사 속 비밀', '우주/과학', '심해의 신비',
+      '미래 기술', '흥미로운 심리학', '동물 퀴즈', '세계의 불가사의', '충격적인 실화',
+      '밸런스 게임', '만약에 시리즈', '생활 꿀팁', '음식 월드컵', '여행지 추천',
+      '성격 유형(MBTI)', '연애 심리', '도시 전설', '기묘한 발명품', '역설/딜레마',
+      '초능력 상상', '좀비 아포칼립스', '시간 여행', '평행 우주', '꿈 해몽'
+    ];
+
+    // 랜덤하게 3개의 테마 선택
+    const selectedThemes = THEMES.sort(() => 0.5 - Math.random()).slice(0, 3);
+    
+    // Gemini에게 요청할 프롬프트 구성
+    const prompt = `
+유튜브 쇼츠 영상으로 만들면 좋을 흥미로운 주제 5가지를 추천해줘.
+특히 다음 키워드들과 관련된 참신한 주제를 섞어서 제안해줘: [${selectedThemes.join(', ')}]
+
+다음 JSON 형식으로만 응답해줘:
+[
+  { "category": "카테고리(2~4글자)", "text": "주제 텍스트(20자 내외)" },
+  ...
+]
+
+조건:
+1. 20-30대 한국인이 클릭할 수밖에 없는 "어그로성" 있고 "흥미로운" 주제여야 해.
+2. 뻔한 주제(예: 라면 먹기 vs 굶기)는 피하고, 구체적이고 자극적인 상황을 설정해줘.
+3. 반드시 JSON 배열 포맷만 출력해. 마크다운이나 추가 설명 금지.
+`;
+
+    // Gemini 호출 (높은 Temperature로 다양성 확보)
+    // generateStory 메서드는 StoryScript 형식을 반환하므로, 직접 model.generateContent를 호출해야 하지만,
+    // 여기서는 편의상 storyGenerator 내부의 genAI 인스턴스에 접근할 수 없으므로
+    // storyGenerator를 우회하거나, storyGenerator에 범용 메서드를 추가하는 것이 좋음.
+    // 하지만 현재 구조상 직접 구현이 어려우므로 storyGenerator를 활용하되,
+    // StoryGenerator가 IStoryGenerator 인터페이스를 따르므로, 임시로 로컬 인스턴스를 생성하거나
+    // GoogleGenerativeAI를 직접 import해서 사용함.
+    
+    // *직접 GoogleGenerativeAI 호출 (api.ts 상단에 import 되어 있다고 가정)*
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash', // 요청에 따라 gemini-2.5-flash 사용
+      generationConfig: { temperature: 1.2 } // 높은 창의성
+    });
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const jsonStr = text.replace(/```json|```/g, '').trim();
+    
+    let recommendations;
+    try {
+      recommendations = JSON.parse(jsonStr);
+    } catch (e) {
+      // 파싱 실패 시 기본값 반환 (Fail-safe)
+      console.error('Failed to parse Gemini recommendation:', e);
+      recommendations = [
+        { category: '오류', text: '주제 추천 생성에 실패했습니다. 다시 시도해주세요.' }
+      ];
+    }
+
+    res.json({ topics: recommendations });
+
+  } catch (error) {
+    console.error('Error getting recommendations:', error);
+    // 에러 발생 시에도 빈 배열보다는 하드코딩된 백업 데이터 반환 가능
+    res.status(500).json({ error: 'Failed to recommend topics' });
+  }
+});
+
 // 2. 에셋 검색 (Search Assets)
 router.post('/assets', async (req, res) => {
   try {

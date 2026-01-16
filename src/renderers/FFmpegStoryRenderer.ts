@@ -490,7 +490,8 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       // 강조 텍스트 이전의 일반 텍스트
       if (match.index > lastIndex) {
         const normalText = title.substring(lastIndex, match.index);
-        if (normalText) {
+        // 공백만 있는 경우에도 추가 (공백도 중요한 세그먼트)
+        if (normalText.length > 0) {
           segments.push({ text: normalText, isHighlight: false });
         }
       }
@@ -503,14 +504,26 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     // 마지막 남은 일반 텍스트
     if (lastIndex < title.length) {
       const normalText = title.substring(lastIndex);
-      if (normalText) {
+      if (normalText.length > 0) {
         segments.push({ text: normalText, isHighlight: false });
       }
     }
 
-    return segments.length > 0
-      ? segments
-      : [{ text: title, isHighlight: false }];
+    const result =
+      segments.length > 0
+        ? segments
+        : [{ text: title, isHighlight: false }];
+
+    console.log('  🔤 Parsed segments:', {
+      title,
+      segments: result.map((s) => ({
+        text: s.text,
+        length: s.text.length,
+        isHighlight: s.isHighlight,
+      })),
+    });
+
+    return result;
   }
 
   /**
@@ -556,8 +569,24 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       actualIndex++;
     }
 
-    const line1 = text.substring(0, actualIndex).trim();
-    const line2 = text.substring(actualIndex).trim();
+    // 공백 위치에서 분할하되, 공백은 건너뛰어서 두 번째 줄에 포함되지 않도록 함
+    // 이렇게 하면 "단어1 단어2"가 "단어1" / "단어2"로 깔끔하게 분할됨
+    while (actualIndex < text.length && text[actualIndex] === ' ') {
+      actualIndex++;
+    }
+
+    // trimEnd()와 trimStart()를 사용하여 각 줄의 앞뒤 공백만 제거
+    // 줄 내부의 공백은 유지됨
+    const line1 = text.substring(0, actualIndex).trimEnd();
+    const line2 = text.substring(actualIndex).trimStart();
+
+    console.log('  📐 Title split:', {
+      original: text,
+      line1,
+      line2,
+      splitIndex,
+      actualIndex,
+    });
 
     return [line1, line2];
   }
@@ -605,28 +634,66 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       const startX = (canvas.width - totalWidth) / 2;
 
       let currentX = startX;
+      const isLastLine = lineIndex === lines.length - 1;
 
       segments.forEach((segment, segmentIndex) => {
+        const trimmedText = segment.text.trim();
+
+        // 공백만 있는 세그먼트는 drawtext를 생성하지 않고 X 위치만 이동
+        if (trimmedText === '') {
+          currentX += lineWidths[segmentIndex];
+          return; // 다음 세그먼트로 건너뜀 (currentLabel은 유지)
+        }
+
+        // 텍스트 앞뒤 공백 개수 계산
+        const leadingSpaces = segment.text.match(/^\s*/)?.[0].length || 0;
+        const trailingSpaces = segment.text.match(/\s*$/)?.[0].length || 0;
+
+        // Canvas로 공백 하나의 너비 측정
+        const spaceWidth = this.measureTextWidths(
+          [{ text: ' ', isHighlight: false }],
+          titleConfig.fontSize,
+          fontFile,
+        )[0];
+
+        // 앞쪽 공백만큼 X 위치 이동
+        currentX += leadingSpaces * spaceWidth;
+
         const isLastSegment = segmentIndex === segments.length - 1;
         const nextLabel =
-          isLastSegment && lineIndex === lines.length - 1
-            ? outputLabel
-            : `title_temp${filterIndex}`;
+          isLastSegment && isLastLine ? outputLabel : `title_temp${filterIndex}`;
 
         const color = segment.isHighlight
           ? titleConfig.highlightColor
           : titleConfig.fontColor;
 
-        const escapedText = this.escapeFFmpegText(segment.text);
+        // trim된 텍스트만 렌더링
+        const escapedText = this.escapeFFmpegText(trimmedText);
 
         filters.push(
           `[${currentLabel}]drawtext=fontfile='${fontFile}':text='${escapedText}':fontcolor=${color}:fontsize=${titleConfig.fontSize}:x=${Math.round(currentX)}:y=${yPosition}:borderw=${titleConfig.borderWidth}:bordercolor=${titleConfig.borderColor}[${nextLabel}]`,
         );
 
-        currentX += lineWidths[segmentIndex];
+        // trim된 텍스트 너비만큼 이동
+        const trimmedWidth = this.measureTextWidths(
+          [{ text: trimmedText, isHighlight: segment.isHighlight }],
+          titleConfig.fontSize,
+          fontFile,
+        )[0];
+        currentX += trimmedWidth;
+
+        // 뒤쪽 공백만큼 X 위치 이동
+        currentX += trailingSpaces * spaceWidth;
+
         currentLabel = nextLabel;
         filterIndex++;
       });
+
+      // 마지막 줄이고 currentLabel이 아직 outputLabel이 아니면 연결 필터 추가
+      // (모든 세그먼트가 공백인 경우를 대비)
+      if (isLastLine && currentLabel !== outputLabel) {
+        filters.push(`[${currentLabel}]null[${outputLabel}]`);
+      }
     });
 
     return filters;
