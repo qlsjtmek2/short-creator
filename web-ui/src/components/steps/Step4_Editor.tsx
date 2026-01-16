@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
-import { RefreshCw, Wand2, Music, Play, Pause, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
-import { EditorSegment, AssetGroup } from '../../types';
-import { previewTTS } from '@/lib/api';
+import { RefreshCw, Wand2, Music, Play, Pause, ChevronLeft, ChevronRight, Settings, Loader2 } from 'lucide-react';
+import { EditorSegment, AssetGroup, RenderManifest } from '../../types';
+import { previewTTS, getRenderManifest } from '@/lib/api';
 import { ShortsVideo } from '../../remotion/compositions/ShortsVideo';
+import { ShortsVideoManifest } from '../../remotion/compositions/ShortsVideoManifest';
 import { ShortsComposition, VideoLayer } from '../../remotion/types/schema';
 import { Timeline } from '../editor/Timeline';
 
@@ -13,7 +14,7 @@ interface Step4_EditorProps {
   topic: string;
   assets: AssetGroup[];
   script: { text: string; imageKeyword: string }[];
-  onNext: (segments: EditorSegment[]) => void;
+  onNext: (segments: EditorSegment[], manifest?: RenderManifest) => void;
   onBack: () => void;
 }
 
@@ -29,6 +30,8 @@ export default function Step4_Editor({
   // State
   const [segments, setSegments] = useState<EditorSegment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [manifest, setManifest] = useState<RenderManifest | null>(null);
+  const [manifestLoading, setManifestLoading] = useState(false);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false); // Playback state
@@ -74,6 +77,35 @@ export default function Step4_Editor({
     initSegments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Update Manifest (Phase 21: SSOT)
+  useEffect(() => {
+    if (segments.length === 0) return;
+
+    const updateManifest = async () => {
+        setManifestLoading(true);
+        try {
+            const scriptData = {
+                title: topic,
+                sentences: segments.map(s => ({
+                    text: s.text,
+                    imagePath: s.imageUrl?.replace('http://127.0.0.1:3001/output', 'output'),
+                    audioPath: s.audioUrl?.replace('http://127.0.0.1:3001/output', 'output'),
+                    duration: s.audioDuration
+                }))
+            };
+            const m = await getRenderManifest(scriptData as any, segments);
+            setManifest(m);
+        } catch (e) {
+            console.error('Failed to get manifest:', e);
+        } finally {
+            setManifestLoading(false);
+        }
+    };
+
+    const timer = setTimeout(updateManifest, 500); // Debounce
+    return () => clearTimeout(timer);
+  }, [segments, topic]);
 
   // Sync Player State & Keyboard Listener
   useEffect(() => {
@@ -242,12 +274,14 @@ export default function Step4_Editor({
           <span className="font-bold">{topic}</span>
         </div>
         <div className="flex items-center gap-2">
+          {manifestLoading && <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />}
           <button className="p-2 hover:bg-zinc-800 rounded-full text-zinc-400">
             <Settings size={20} />
           </button>
           <button 
-            onClick={() => onNext(segments)}
-            className="bg-purple-600 hover:bg-purple-500 px-6 py-1.5 rounded-full font-bold text-sm transition-colors"
+            onClick={() => onNext(segments, manifest || undefined)}
+            className="bg-purple-600 hover:bg-purple-500 px-6 py-1.5 rounded-full font-bold text-sm transition-colors disabled:opacity-50"
+            disabled={manifestLoading || !manifest}
           >
             영상 추출하기
           </button>
@@ -262,18 +296,24 @@ export default function Step4_Editor({
           
           {/* Main Player */}
           <div className="relative h-full aspect-[9/16] shadow-2xl rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800">
-            <Player
-              ref={playerRef}
-              component={ShortsVideo}
-              inputProps={compositionProps}
-              durationInFrames={compositionProps.durationInFrames}
-              fps={FPS}
-              compositionWidth={1080}
-              compositionHeight={1920}
-              style={{ width: '100%', height: '100%' }}
-              controls={false} 
-              clickToPlay={false}
-            />
+            {manifest ? (
+                <Player
+                    ref={playerRef}
+                    component={ShortsVideoManifest}
+                    inputProps={manifest}
+                    durationInFrames={manifest.metadata.totalFrames}
+                    fps={manifest.metadata.fps}
+                    compositionWidth={manifest.canvas.width}
+                    compositionHeight={manifest.canvas.height}
+                    style={{ width: '100%', height: '100%' }}
+                    controls={false} 
+                    clickToPlay={false}
+                />
+            ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-zinc-700" />
+                </div>
+            )}
           </div>
 
           {/* Floating Play Button (Optional overlay) */}

@@ -21,6 +21,7 @@ export const RENDER_CONFIG = {
     lineSpacing: 120,
   },
   subtitle: {
+    fontFamily: 'Pretendard-Bold',
     fontSize: 100,
     primaryColor: '&H00FFFFFF',
     outlineColor: '&H00000000',

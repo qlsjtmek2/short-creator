@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { ScriptSegment, AssetGroup, EditorSegment } from '@/types';
+import { ScriptSegment, AssetGroup, EditorSegment, RenderManifest } from '@/types';
 import { searchAssets, renderVideo } from '@/lib/api';
 
 // Components
@@ -20,6 +20,7 @@ export default function ShortCreator() {
   const [script, setScript] = useState<ScriptSegment[]>([]);
   const [assets, setAssets] = useState<AssetGroup[]>([]);
   const [segments, setSegments] = useState<EditorSegment[]>([]); // New: Editor Segments
+  const [manifest, setManifest] = useState<RenderManifest | null>(null); // New: Phase 21
   const [jobId, setJobId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -83,7 +84,7 @@ export default function ShortCreator() {
   };
 
   // Step 4 -> 5 (Render)
-  const handleStartRender = async (finalSegments?: EditorSegment[]) => {
+  const handleStartRender = async (finalSegments?: EditorSegment[], finalManifest?: RenderManifest) => {
     handleSetLoading(true, '영상 렌더링을 시작합니다...');
     try {
       // Editor에서 넘어온 segments가 있으면 사용, 없으면 기존 script/assets 기반으로(하위호환)
@@ -94,6 +95,8 @@ export default function ShortCreator() {
 
       if (finalSegments && finalSegments.length > 0) {
         setSegments(finalSegments);
+        if (finalManifest) setManifest(finalManifest);
+
         // EditorSegment -> ScriptSegment & AssetUrls 변환
         assetUrls = finalSegments.map(s => s.imageUrl || '');
         finalScript = finalSegments.map(s => ({
@@ -119,14 +122,14 @@ export default function ShortCreator() {
         if (parsed.bgmFile) bgmFile = parsed.bgmFile;
       }
 
-      // TODO: EditorState(segments 정보, 오디오 타이밍 등)를 서버에 전달하도록 renderVideo API 확장 필요
-      // 일단은 기존 방식대로 렌더링
+      // Phase 21: Manifest 기반 렌더링
       const res = await renderVideo(topic, finalScript, assetUrls, {
         mockTtsSpeed,
         titleFont,
         subtitleFont,
         bgmFile,
         segments: finalSegments && finalSegments.length > 0 ? finalSegments : undefined,
+        manifest: finalManifest, // Pass manifest to server
       });
       setJobId(res.jobId);
       setStep(5);

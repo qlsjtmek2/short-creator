@@ -173,7 +173,7 @@ const SubtitleChunkView: React.FC<{ text: string; duration: number; fps: number 
       right: 0,
       bottom: RENDER_CONFIG.letterbox.bottom / 2 - 20, 
       textAlign: 'center',
-      fontFamily: 'Pretendard-Bold', // Config에서 가져와야 함
+      fontFamily: RENDER_CONFIG.subtitle.fontFamily || 'Pretendard-Bold',
       fontSize: RENDER_CONFIG.subtitle.fontSize,
       color: 'white',
       whiteSpace: 'pre-wrap',
