@@ -85,13 +85,25 @@ export default function ShortCreator() {
 
       // 설정 로드
       let mockTtsSpeed = 1.0;
+      let titleFont = 'Pretendard-ExtraBold.ttf';
+      let subtitleFont = 'Pretendard-Bold.ttf';
+      let bgmFile = 'bgm2.mp3';
+
       const savedSettings = localStorage.getItem('shorts-creator-settings');
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         if (parsed.mockTtsSpeed) mockTtsSpeed = parsed.mockTtsSpeed;
+        if (parsed.titleFont) titleFont = parsed.titleFont;
+        if (parsed.subtitleFont) subtitleFont = parsed.subtitleFont;
+        if (parsed.bgmFile) bgmFile = parsed.bgmFile;
       }
 
-      const res = await renderVideo(topic, script, assetUrls, { mockTtsSpeed });
+      const res = await renderVideo(topic, script, assetUrls, {
+        mockTtsSpeed,
+        titleFont,
+        subtitleFont,
+        bgmFile,
+      });
       setJobId(res.jobId);
       setStep(4);
     } catch (error) {

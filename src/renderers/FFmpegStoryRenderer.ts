@@ -4,7 +4,6 @@ import * as path from 'path';
 import { createCanvas, registerFont } from 'canvas';
 import { IStoryVideoRenderer } from '../../types/interfaces';
 import { StoryScriptWithAssets } from '../../types/common';
-import { getStoryConfig } from '../../config/shorts.config';
 
 /**
  * 타이틀 텍스트 세그먼트 (일반 텍스트 또는 강조 텍스트)
@@ -23,7 +22,49 @@ interface TitleSegment {
  * - 문장별 오디오 병합 + BGM 믹싱
  */
 export class FFmpegStoryRenderer implements IStoryVideoRenderer {
-  private config = getStoryConfig();
+  // 기본 설정값 (하드코딩)
+  private config = {
+    canvas: {
+      width: 1080,
+      height: 1920,
+    },
+    letterbox: {
+      top: 350,
+      bottom: 350,
+      color: 'black',
+    },
+    title: {
+      fontPath: '', // render() 메서드에서 설정됨
+      fontSize: 100,
+      fontColor: 'white',
+      highlightColor: '#FFDB58',
+      y: 150,
+      borderWidth: 2,
+      borderColor: 'black',
+      maxCharsPerLine: 15,
+      lineSpacing: 120,
+    },
+    kenBurns: {
+      startZoom: 1.0,
+      endZoom: 1.2,
+      zoomIncrement: 0.0001,
+      fps: 60,
+    },
+    audio: {
+      bgmPath: '', // render() 메서드에서 설정됨
+      ttsVolume: 1.0,
+      bgmVolume: 0.1,
+    },
+    rendering: {
+      videoCodec: 'libx264',
+      preset: 'medium',
+      crf: 23,
+      pixelFormat: 'yuv420p',
+      audioCodec: 'aac',
+      audioBitrate: '192k',
+    },
+  };
+
   /**
    * 스토리 스크립트를 영상으로 렌더링합니다.
    */
@@ -31,8 +72,25 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     script: StoryScriptWithAssets,
     subtitlePath: string,
     outputPath: string,
-    bgmPath?: string,
+    titleFont?: string,
+    bgmFile?: string,
   ): Promise<string> {
+    // 파일명으로부터 절대 경로 생성
+    const titleFontFile = titleFont || 'Pretendard-ExtraBold.ttf';
+    const bgmFileName = bgmFile || 'bgm2.mp3';
+
+    this.config.title.fontPath = path.resolve(
+      process.cwd(),
+      'assets/fonts',
+      titleFontFile,
+    );
+    this.config.audio.bgmPath = path.resolve(
+      process.cwd(),
+      'assets/music',
+      bgmFileName,
+    );
+
+    const bgmPath = this.config.audio.bgmPath;
     console.log('  🎬 Starting FFmpeg rendering...');
 
     // 출력 디렉토리가 없으면 생성

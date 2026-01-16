@@ -52,6 +52,26 @@ const TONES = [
   { id: 'emotional', name: '감동 (힐링/위로)' },
 ];
 
+const AVAILABLE_FONTS = [
+  { id: 'Pretendard-Black.ttf', name: 'Pretendard Black (가장 굵음)' },
+  { id: 'Pretendard-ExtraBold.ttf', name: 'Pretendard Extra Bold (매우 굵음)' },
+  { id: 'Pretendard-Bold.ttf', name: 'Pretendard Bold (굵음, 기본)' },
+  { id: 'Pretendard-SemiBold.ttf', name: 'Pretendard Semi Bold (중간 굵음)' },
+  { id: 'Pretendard-Medium.ttf', name: 'Pretendard Medium (중간)' },
+  { id: 'Pretendard-Regular.ttf', name: 'Pretendard Regular (보통)' },
+  { id: 'Pretendard-Light.ttf', name: 'Pretendard Light (가벼움)' },
+  {
+    id: 'Pretendard-ExtraLight.ttf',
+    name: 'Pretendard Extra Light (매우 가벼움)',
+  },
+  { id: 'Pretendard-Thin.ttf', name: 'Pretendard Thin (가장 가벼움)' },
+];
+
+const AVAILABLE_BGM = [
+  { id: 'bgm.mp3', name: 'BGM 1 (Would You Rather용)' },
+  { id: 'bgm2.mp3', name: 'BGM 2 (스토리텔링용, 기본)' },
+];
+
 // Color Picker Component
 const ColorPicker = ({
   label,
@@ -154,6 +174,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     // Audio Settings
     ttsVolume: 1.0,
     bgmVolume: 0.1,
+
+    // Font & BGM Files
+    titleFont: 'Pretendard-ExtraBold.ttf',
+    subtitleFont: 'Pretendard-Bold.ttf',
+    bgmFile: 'bgm2.mp3',
 
     // Rendering Settings
     videoCodec: 'libx264',
@@ -588,6 +613,75 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       setSettings({ ...settings, letterboxColor: color })
                     }
                   />
+                </div>
+              </div>
+
+              {/* Font Settings */}
+              <div className="space-y-4 border-t border-zinc-800 pt-4">
+                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                  <Type className="w-4 h-4" />
+                  폰트 설정
+                </h3>
+
+                {/* Title Font */}
+                <div className="space-y-2">
+                  <label className="text-sm text-zinc-300">타이틀 폰트</label>
+                  <select
+                    value={settings.titleFont}
+                    onChange={(e) =>
+                      setSettings({ ...settings, titleFont: e.target.value })
+                    }
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors text-white"
+                  >
+                    {AVAILABLE_FONTS.map((font) => (
+                      <option key={font.id} value={font.id}>
+                        {font.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Subtitle Font */}
+                <div className="space-y-2">
+                  <label className="text-sm text-zinc-300">자막 폰트</label>
+                  <select
+                    value={settings.subtitleFont}
+                    onChange={(e) =>
+                      setSettings({ ...settings, subtitleFont: e.target.value })
+                    }
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors text-white"
+                  >
+                    {AVAILABLE_FONTS.map((font) => (
+                      <option key={font.id} value={font.id}>
+                        {font.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* BGM Settings */}
+              <div className="space-y-4 border-t border-zinc-800 pt-4">
+                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                  <Volume2 className="w-4 h-4" />
+                  배경 음악
+                </h3>
+
+                <div className="space-y-2">
+                  <label className="text-sm text-zinc-300">BGM 파일</label>
+                  <select
+                    value={settings.bgmFile}
+                    onChange={(e) =>
+                      setSettings({ ...settings, bgmFile: e.target.value })
+                    }
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition-colors text-white"
+                  >
+                    {AVAILABLE_BGM.map((bgm) => (
+                      <option key={bgm.id} value={bgm.id}>
+                        {bgm.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>

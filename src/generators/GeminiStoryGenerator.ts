@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { StoryScript } from '../../types/common';
 import { IStoryGenerator } from '../../types/interfaces';
 import * as dotenv from 'dotenv';
-import { getStoryPrompts, getGeminiConfig } from '../../config/prompts.config';
 
 dotenv.config();
 
@@ -19,8 +18,8 @@ export interface StoryGenerationOptions {
 
 export class GeminiStoryGenerator implements IStoryGenerator {
   private genAI: GoogleGenerativeAI;
-  private promptConfig = getStoryPrompts();
-  private geminiConfig = getGeminiConfig();
+  private readonly DEFAULT_MODEL = 'gemini-2.5-flash';
+  private readonly DEFAULT_TEMPERATURE = 0.7;
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -32,13 +31,12 @@ export class GeminiStoryGenerator implements IStoryGenerator {
     topic: string,
     options?: StoryGenerationOptions,
   ): Promise<StoryScript> {
-    // 1. 모델 선택 (옵션 > 설정파일 > 기본값)
-    const modelName =
-      options?.modelName || this.geminiConfig.modelName || 'gemini-pro';
+    // 1. 모델 선택 (옵션 > 기본값)
+    const modelName = options?.modelName || this.DEFAULT_MODEL;
 
     // Generation Config 설정
     const generationConfig = {
-      temperature: options?.temperature ?? 0.7,
+      temperature: options?.temperature ?? this.DEFAULT_TEMPERATURE,
     };
 
     const model = this.genAI.getGenerativeModel({
@@ -50,13 +48,10 @@ export class GeminiStoryGenerator implements IStoryGenerator {
       `🤖 Using Gemini Model: ${modelName} (Temp: ${generationConfig.temperature})`,
     );
 
-    // 2. 프롬프트 구성
-    const titleMaxLength =
-      options?.titleMaxLength || this.promptConfig.titleMaxLength;
-    const sentenceCount =
-      options?.sentenceCount || parseInt(this.promptConfig.sentenceCount);
-    const sentenceMaxLength =
-      options?.sentenceMaxLength || this.promptConfig.sentenceMaxLength;
+    // 2. 프롬프트 구성 (기본값 사용)
+    const titleMaxLength = options?.titleMaxLength || 25;
+    const sentenceCount = options?.sentenceCount || 8;
+    const sentenceMaxLength = options?.sentenceMaxLength || 100;
     const tone = options?.tone || 'humorous';
 
     // 톤에 따른 지시사항 추가
@@ -73,9 +68,8 @@ export class GeminiStoryGenerator implements IStoryGenerator {
     else if (tone === 'emotional')
       toneInstruction = '따뜻하고 감동적인 힐링 톤으로 작성해줘.';
 
-    // 템플릿 선택 (옵션 > 설정파일)
-    let promptTemplate =
-      options?.userPromptTemplate || this.promptConfig.userPromptTemplate;
+    // 템플릿 선택 (옵션 > 기본값)
+    let promptTemplate = options?.userPromptTemplate;
 
     // 템플릿이 비어있으면 기본값 복구
     if (!promptTemplate) {

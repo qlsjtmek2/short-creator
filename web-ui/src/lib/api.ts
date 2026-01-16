@@ -44,7 +44,12 @@ export const renderVideo = async (
   topic: string,
   script: ScriptSegment[],
   assetUrls: string[],
-  options?: { mockTtsSpeed?: number },
+  options?: {
+    mockTtsSpeed?: number;
+    titleFont?: string;
+    subtitleFont?: string;
+    bgmFile?: string;
+  },
 ) => {
   const response = await api.post('/render', {
     topic,

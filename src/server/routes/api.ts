@@ -170,7 +170,15 @@ router.post('/assets', async (req, res) => {
 // 3. 렌더링 요청 (Render Video)
 router.post('/render', async (req, res) => {
   try {
-    const { topic, script, assetUrls, mockTtsSpeed } = req.body;
+    const {
+      topic,
+      script,
+      assetUrls,
+      mockTtsSpeed,
+      titleFont,
+      subtitleFont,
+      bgmFile,
+    } = req.body;
     console.log(`🎬 Requesting render for "${topic}"`);
 
     // MockTTSProvider 속도 설정
@@ -196,6 +204,11 @@ router.post('/render', async (req, res) => {
           script,
           assetUrls,
           OUTPUT_DIR,
+          {
+            titleFont,
+            subtitleFont,
+            bgmFile,
+          },
         );
 
         const relativePath = path.relative(

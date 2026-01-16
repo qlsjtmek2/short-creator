@@ -148,6 +148,7 @@ export interface IStoryVideoRenderer {
     script: StoryScriptWithAssets,
     subtitlePath: string,
     outputPath: string,
-    bgmPath?: string,
+    titleFont?: string,
+    bgmFile?: string,
   ): Promise<string>;
 }

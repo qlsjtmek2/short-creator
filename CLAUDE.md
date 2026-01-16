@@ -223,85 +223,96 @@ IMGFLIP_PASSWORD=...    # Imgflip 비밀번호
 
 ---
 
-## 설정 파일 커스터마이징
+## 설정 관리
 
-모든 시각적/오디오 설정은 **프로젝트 루트의 `shorts.config.json`** 파일에서 중앙 관리됩니다. 하드코딩된 값을 직접 수정하지 말고, 이 JSON 설정 파일을 통해 커스터마이징하세요.
+모든 설정은 **Web UI의 설정 모달**에서 관리됩니다. 설정 파일(JSON) 없이 localStorage 기반으로 동작하며, 브라우저에 저장되어 재시작 후에도 유지됩니다.
 
-### 설정 파일 위치
-- **실제 설정 파일**: `shorts.config.json` (프로젝트 최상단)
-- **예시 파일**: `shorts.config.example.json` (프로젝트 최상단)
-- **타입 정의**: `types/config.ts`
-- **로더**: `config/shorts.config.ts` (JSON 파일을 읽어옴)
+### 설정 모달 사용 방법
 
-### 주요 설정 항목
+1. **설정 모달 열기**: Web UI 우측 상단의 톱니바퀴 아이콘 클릭
+2. **설정 변경**: 각 탭에서 원하는 설정 조정
+3. **저장**: "저장하기" 버튼 클릭
+4. **적용**: 다음 영상 생성 시 자동 적용
 
-#### 스토리텔링 쇼츠 설정 (`storytelling`)
+### 설정 탭 구성
 
-**캔버스 및 레터박스**
-- `canvas.width`, `canvas.height`: 영상 해상도
-- `letterbox.top`, `letterbox.bottom`: 상/하단 레터박스 높이 (기본: 300px)
-- `letterbox.color`: 레터박스 색상 (기본: `black`)
+#### 1. 기본 (General)
+- **기본 이미지 소스**: Pexels, Google, Reddit, Klipy, Imgflip 중 선택
+- **Mock TTS 속도**: 0.5x ~ 3.0x (API 키 없을 때 사용되는 가상 음성 속도)
 
-**타이틀 (상단 고정 제목)**
-- `title.fontPath`: FFmpeg drawtext용 폰트 경로
-- `title.fontSize`: 타이틀 크기 (기본: 48px)
-- `title.fontColor`: 타이틀 색상 (기본: `white`)
-- `title.y`: 상단에서의 Y 위치 (기본: 150px)
-- `title.borderWidth`, `title.borderColor`: 텍스트 테두리
+#### 2. AI 설정
+- **Gemini 모델**: Gemini 3.0 Pro, 3.0 Flash, 2.5 Pro, 2.5 Flash 등 선택
+- **Temperature**: 0.0 ~ 2.0 (창의성 제어)
+  - 0.7 이하: 정보성 콘텐츠 (사실 중심, 일관된 문체)
+  - 1.0 ~ 1.5: 창의적 콘텐츠 (스토리텔링, 다양한 표현)
+- **톤**: 유머러스, 진지함, 공포, 감동 중 선택
+- **콘텐츠 길이**: 제목/문장 개수/문장 최대 길이 설정
+- **프롬프트 커스터마이징**: System Prompt와 User Prompt Template 수정 가능
 
-**자막 (ASS 파일)**
-- `subtitle.fontName`: 자막 폰트명 (기본: `Pretendard ExtraBold`)
-- `subtitle.fontSize`: 자막 크기 (기본: 60px)
-- `subtitle.primaryColor`, `subtitle.outlineColor`, `subtitle.backColor`: ASS 색상 형식 (&H00BBGGRR)
-- `subtitle.outline`, `subtitle.shadow`: 아웃라인 두께, 그림자 크기
-- `subtitle.alignment`: 정렬 (5=중앙)
-- `subtitle.marginV`: 하단 여백
+#### 3. 캔버스 (Canvas & Text)
+- **캔버스 크기**: 너비/높이 (기본: 1080x1920)
+- **레터박스**: 상단/하단 높이, 배경 색상
+- **폰트 설정**:
+  - **타이틀 폰트**: `assets/fonts/` 폴더의 Pretendard 폰트 중 선택
+  - **자막 폰트**: `assets/fonts/` 폴더의 Pretendard 폰트 중 선택
+  - 9가지 굵기 지원: Thin, ExtraLight, Light, Regular, Medium, SemiBold, Bold, ExtraBold, Black
+- **배경 음악**: `assets/music/` 폴더의 BGM 파일 중 선택
+  - BGM 1 (Would You Rather용)
+  - BGM 2 (스토리텔링용, 기본)
 
-**자막 애니메이션**
-- `subtitle.animation.popInDuration`: 뿅 하고 나타나는 시간 (기본: 200ms)
-- `subtitle.animation.scaleUpStart`, `subtitle.animation.scaleUpEnd`: 시작/최대 배율 (기본: 0%, 120%)
-- `subtitle.animation.scaleDownStart`, `subtitle.animation.scaleDownEnd`: Scale down 타이밍 (기본: 200ms, 400ms)
-- `subtitle.animation.finalScale`: 최종 배율 (기본: 100%)
+#### 4. 텍스트 (Text)
+- **타이틀 설정**: 폰트 크기, Y 위치, 색상, 강조 색상, 테두리
+- **자막 설정**: 폰트 크기, 테두리 두께, 그림자, 하단 여백
+- **자막 줄바꿈**: 좌/우측 여백, 안전 패딩, 최대 배율
 
-**Ken Burns Zoom-in 효과**
-- `kenBurns.startZoom`, `kenBurns.endZoom`: 시작/끝 줌 배율 (기본: 1.0, 1.1)
-- `kenBurns.zoomIncrement`: 프레임당 줌 증가량 (기본: 0.0001)
-- `kenBurns.fps`: 프레임레이트 (기본: 30)
+#### 5. 효과 (Effects)
+- **자막 애니메이션**: Pop-In 지속시간, Scale Up/Down 타이밍
+- **Ken Burns 효과**: 시작/끝 줌 배율, 줌 증가량, FPS
 
-**FFmpeg 렌더링**
-- `rendering.videoCodec`: 비디오 코덱 (기본: `libx264`)
-- `rendering.preset`: 인코딩 속도 (기본: `medium`)
-- `rendering.crf`: 화질 (0-51, 낮을수록 고화질, 기본: 23)
-- `rendering.pixelFormat`: 픽셀 포맷 (기본: `yuv420p`)
-- `rendering.audioCodec`, `rendering.audioBitrate`: 오디오 설정
+#### 6. 오디오 (Audio & Rendering)
+- **오디오 볼륨**: TTS 볼륨, BGM 볼륨
+- **렌더링 설정**: 비디오 코덱, Preset, CRF, Pixel Format, 오디오 설정
 
-### 설정 파일 사용 방법
+### 기본값 (하드코딩)
 
-1. **설정 파일 확인**: `config/shorts.config.ts` 파일을 엽니다.
-2. **값 수정**: 원하는 설정값을 변경합니다. (예: 폰트 크기를 60에서 70으로)
-3. **저장 및 실행**: 파일을 저장하고 `npm start` 또는 `npm run story`를 실행합니다.
-4. **결과 확인**: 변경된 설정이 영상에 반영됩니다.
+설정을 변경하지 않으면 다음 기본값이 사용됩니다:
 
-**예시: 자막 크기 변경**
-```typescript
-// config/shorts.config.ts
-storytelling: {
-  subtitle: {
-    fontSize: 70,  // 60 → 70으로 변경
-    // ... 나머지 설정
-  },
-}
-```
+**AI 설정**:
+- 모델: `gemini-2.5-flash`
+- Temperature: `0.7`
+- 제목 최대 길이: `25자`
+- 문장 개수: `8개`
+- 문장 최대 길이: `100자`
 
-**예시: BGM 볼륨 조절**
-```typescript
-// config/shorts.config.ts
-storytelling: {
-  audio: {
-    ttsVolume: 1.0,
-    bgmVolume: 0.10,  // 0.15 → 0.10으로 줄이기 (더 조용하게)
-  },
-}
+**폰트**:
+- 타이틀 폰트: `Pretendard-ExtraBold.ttf`
+- 자막 폰트: `Pretendard-Bold.ttf`
+
+**BGM**:
+- 기본 BGM: `bgm2.mp3` (스토리텔링용)
+
+**캔버스**:
+- 해상도: `1080x1920`
+- 레터박스: 상/하단 각 `350px`
+
+**Ken Burns 효과**:
+- 시작 줌: `1.0x`
+- 끝 줌: `1.2x`
+- FPS: `60`
+
+**렌더링**:
+- 비디오 코덱: `libx264`
+- CRF: `23`
+- 오디오 비트레이트: `192k`
+
+### 설정 초기화
+
+설정을 기본값으로 되돌리려면:
+1. 브라우저 개발자 도구 (F12) 열기
+2. Console 탭에서 실행:
+```javascript
+localStorage.removeItem('shorts-creator-settings');
+location.reload();
 ```
 
 ---
@@ -358,27 +369,45 @@ storytelling: {
 3. **TTS 동시성**: 문장별 TTS를 순차 생성 (병렬 처리 시 API Rate Limit 위험)
 4. **이미지 자동 선택**: CLI 모드에서는 첫 번째 검색 결과만 사용 (Web UI에서는 수동 선택 가능)
 
-### 최근 완료된 기능 (2026-01-15)
+### 최근 완료된 기능
 
-#### ✅ Web UI 시스템 구축
+#### ✅ 설정 시스템 단순화 (2026-01-16)
+- **설정 파일 완전 제거**: `prompts.json`, `shorts.config.json`, config 로더 파일 모두 삭제
+- **Web UI 전용 설정 관리**: localStorage 기반으로 모든 설정 통합
+- **폰트 선택 UI 추가**: `assets/fonts/` 폴더의 9가지 Pretendard 폰트 중 선택 가능
+  - 타이틀 폰트: 상단 고정 제목에 사용
+  - 자막 폰트: ASS 자막에 사용
+  - 굵기별 선택: Thin, ExtraLight, Light, Regular, Medium, SemiBold, Bold, ExtraBold, Black
+- **BGM 선택 UI 추가**: `assets/music/` 폴더의 BGM 파일 선택 가능
+  - BGM 1 (Would You Rather용)
+  - BGM 2 (스토리텔링용, 기본)
+- **백엔드 하드코딩**: 설정값을 코드 내부에 기본값으로 하드코딩하여 관리 복잡도 제거
+- **설정 우선순위**: Web UI localStorage → 기본값 (하드코딩)
+- **삭제된 파일 (8개)**:
+  - `prompts.json`, `prompts.example.json`
+  - `shorts.config.json`, `shorts.config.example.json`
+  - `config/prompts.config.ts`, `config/shorts.config.ts`
+  - `types/prompts.ts`, `types/config.ts`
+
+#### ✅ Web UI 시스템 구축 (2026-01-15)
 - Next.js 15 + React 19 기반 4단계 워크플로우
 - 실시간 진행 상황 표시 (Step 4)
 - 드래그 앤 드롭으로 대본 순서 조정 (Step 2)
 - 이미지 미리보기 및 수동 선택 (Step 3)
 
-#### ✅ 설정 시스템 개선
+#### ✅ 설정 시스템 개선 (2026-01-15)
 - 프롬프트 커스터마이징 (시스템 프롬프트 수정)
 - Gemini 모델 선택 (2.0 Flash, 2.0 Flash Thinking)
 - Temperature 제어 (0.0 ~ 2.0, 슬라이더 UI)
 - Mock TTS 속도 제어 (0.5x ~ 2.0x)
 - Google Image Search Provider 추가
 
-#### ✅ Gemini 모델 업데이트
+#### ✅ Gemini 모델 업데이트 (2026-01-15)
 - `gemini-2.5-flash` → `gemini-2.0-flash-exp` (2026 라인업)
 - 실험용 모델 추가: `gemini-2.0-flash-thinking-exp-01-21`
 - Temperature 파라미터 지원
 
-#### ✅ Would You Rather 기능 제거
+#### ✅ Would You Rather 기능 제거 (2026-01-15)
 - `src/ShortsGenerator.ts`, `src/cli-wyr.ts` 완전 삭제
 - 스토리텔링 전용 시스템으로 단순화
 - 관련 설정, 명령어, 문서 모두 제거

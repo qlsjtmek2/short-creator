@@ -14,14 +14,12 @@ import {
   StorySentence,
   SubtitleEvent,
 } from '../types/common';
-import { getStoryConfig } from '../config/shorts.config';
 
 /**
  * 스토리 파이프라인 전용 오케스트레이터
  * Would You Rather와 독립적으로 스토리텔링 쇼츠를 생성합니다.
  */
 export class StoryOrchestrator {
-  private config = getStoryConfig();
   constructor(
     private storyGenerator: IStoryGenerator,
     private imageProvider: IImageProvider,
@@ -107,8 +105,13 @@ export class StoryOrchestrator {
 
     console.log('✅ All assets downloaded and TTS generated');
 
-    // 공통 렌더링 파이프라인 호출
-    return this._processPostAssets(script, sentencesWithAssets, outputDir);
+    // 공통 렌더링 파이프라인 호출 (기본값 사용)
+    return this._processPostAssets(
+      script,
+      sentencesWithAssets,
+      outputDir,
+      undefined,
+    );
   }
 
   /**
@@ -119,6 +122,11 @@ export class StoryOrchestrator {
     segments: { text: string; imageKeyword: string }[],
     imageUrls: string[],
     outputDir: string,
+    options?: {
+      titleFont?: string;
+      subtitleFont?: string;
+      bgmFile?: string;
+    },
   ): Promise<string> {
     console.log(`\n🎬 Generating interactive story shorts: "${title}"`);
 
@@ -211,7 +219,12 @@ export class StoryOrchestrator {
     );
 
     // 공통 렌더링 파이프라인 호출
-    return this._processPostAssets(script, sentencesWithAssets, outputDir);
+    return this._processPostAssets(
+      script,
+      sentencesWithAssets,
+      outputDir,
+      options,
+    );
   }
 
   /**
@@ -221,6 +234,11 @@ export class StoryOrchestrator {
     script: { title: string },
     sentencesWithAssets: StorySentence[],
     outputDir: string,
+    options?: {
+      titleFont?: string;
+      subtitleFont?: string;
+      bgmFile?: string;
+    },
   ): Promise<string> {
     // 3. 타임스탬프 계산
     console.log('3️⃣ Calculating timestamps...');
@@ -266,13 +284,13 @@ export class StoryOrchestrator {
       'videos',
       `story_${Date.now()}.mp4`,
     );
-    const bgmPath = this.config.audio.bgmPath;
 
     const finalVideoPath = await this.videoRenderer.render(
       scriptWithAssets,
       subtitlePath,
       outputPath,
-      fs.existsSync(bgmPath) ? bgmPath : undefined,
+      options?.titleFont,
+      options?.bgmFile,
     );
 
     console.log(`✅ Story shorts created: ${finalVideoPath}\n`);

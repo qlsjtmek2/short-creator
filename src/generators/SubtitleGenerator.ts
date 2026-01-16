@@ -3,15 +3,48 @@ import * as path from 'path';
 import { createCanvas, registerFont, CanvasRenderingContext2D } from 'canvas';
 import { SubtitleEvent } from '../../types/common';
 import { ISubtitleGenerator } from '../../types/interfaces';
-import { getStoryConfig } from '../../config/shorts.config';
 
 export class SubtitleGenerator implements ISubtitleGenerator {
-  private config = getStoryConfig().subtitle;
+  // 기본 설정값 (하드코딩)
+  private config = {
+    fontPath: '', // 생성자에서 설정됨
+    fontSize: 100,
+    primaryColor: '&H00FFFFFF',
+    outlineColor: '&H00000000',
+    backColor: '&H00000000',
+    outline: 8,
+    shadow: 4,
+    alignment: 2,
+    marginV: 500,
+    maxCharsPerLine: 15,
+    wrapping: {
+      enabled: true,
+      marginL: 100,
+      marginR: 100,
+      safetyPadding: 40,
+      maxScalePercent: 120,
+      fallbackCharsPerLine: 13,
+    },
+    animation: {
+      popInDuration: 100,
+      scaleUpStart: 0,
+      scaleUpEnd: 110,
+      scaleDownStart: 0,
+      scaleDownEnd: 0,
+      finalScale: 120,
+    },
+  };
   private ctx: CanvasRenderingContext2D | null = null;
 
-  constructor(fontPath?: string, fontSize?: number) {
-    // 생성자 파라미터로 오버라이드 가능 (하위 호환성)
-    if (fontPath) this.config.fontPath = fontPath;
+  constructor(fontFileName?: string, fontSize?: number) {
+    // 폰트 파일명으로부터 절대 경로 생성
+    const fontFile = fontFileName || 'Pretendard-Bold.ttf';
+    this.config.fontPath = path.resolve(
+      process.cwd(),
+      'assets/fonts',
+      fontFile,
+    );
+
     if (fontSize) this.config.fontSize = fontSize;
   }
 
