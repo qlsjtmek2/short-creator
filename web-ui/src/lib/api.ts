@@ -7,7 +7,39 @@ const API_BASE_URL = 'http://127.0.0.1:3001/api';
 export const api = axios.create({
   baseURL: API_BASE_URL,
 });
-// ... (중략) ...
+
+export interface DraftResponse {
+  topic: string;
+  script: ScriptSegment[];
+}
+
+export interface StoryGenerationOptions {
+  modelName?: string;
+  systemPrompt?: string;
+  userPromptTemplate?: string;
+  titleMaxLength?: number;
+  sentenceCount?: number;
+  sentenceMaxLength?: number;
+  tone?: string;
+  temperature?: number;
+}
+
+export const generateDraft = async (
+  topic: string,
+  options?: StoryGenerationOptions,
+): Promise<DraftResponse> => {
+  const response = await api.post('/draft', { topic, options });
+  return response.data;
+};
+
+export const searchAssets = async (
+  keywords: string[],
+  provider: string = 'pexels',
+) => {
+  const response = await api.post('/assets', { keywords, provider });
+  return response.data;
+};
+
 export const renderVideo = async (
   topic: string,
   script: ScriptSegment[],
@@ -17,7 +49,7 @@ export const renderVideo = async (
     titleFont?: string;
     subtitleFont?: string;
     bgmFile?: string;
-    segments?: EditorSegment[]; // New: Detailed segments from Editor
+    segments?: EditorSegment[];
   },
 ) => {
   const response = await api.post('/render', {
