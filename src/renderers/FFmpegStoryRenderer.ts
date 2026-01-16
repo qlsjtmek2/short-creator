@@ -101,13 +101,6 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // 1. 오디오 병합 (문장별 오디오들을 하나로 concat)
-    // EditorSegments에 딜레이가 포함되어 있다면, 오디오 사이사이에 무음을 추가해야 함.
-    // 하지만 현재 concatAudio는 단순 파일 concat만 지원함.
-    // 딜레이 처리를 위해 concatAudio 로직을 수정하거나,
-    // generateAudio 단계에서 무음을 붙였어야 함.
-    // 여기서는 간단하게 anullsrc를 활용하여 concat 리스트를 생성할 때 무음 파일을 끼워넣는 방식으로 구현.
-
     const mergedAudioPath = path.join(
       path.dirname(outputPath),
       `merged_audio_${Date.now()}.mp3`,
@@ -149,39 +142,9 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     outputPath: string,
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      // 1. 무음 파일 생성 (최대 딜레이만큼) 또는 concat 필터 사용
-      // concat 필터를 사용하는 것이 가장 깔끔함 (파일 생성 없이 스트림 처리)
-      // 하지만 fluent-ffmpeg로 복잡한 concat 필터 짜기는 어려우므로,
-      // concat demuxer 방식(txt 파일)을 유지하되, 딜레이용 빈 파일을 생성하거나
-      // anullsrc를 활용해야 하는데, concat demuxer는 가상 파일을 지원하지 않음.
-      // 따라서 딜레이가 있는 경우 무음 mp3 파일을 생성해서 끼워넣어야 함.
-
       const tempDir = path.dirname(outputPath);
-      const silenceFiles: string[] = [];
-
-      // concat list 작성
-      let concatContent = '';
-
-      // 딜레이가 있는 경우 무음 파일 생성 (1초짜리 하나 만들어서 반복 사용하거나, 필요한 길이만큼 생성)
-      // 여기서는 필요한 길이만큼 생성하는 함수
-      const createSilence = (duration: number, index: number) => {
-        const silencePath = path.join(tempDir, `silence_${index}_${Date.now()}.mp3`);
-        // ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t duration ...
-        // 동기적으로 실행 (간단히 execSync 사용 권장되지만 여기선 비동기 패턴 유지하려니 복잡)
-        // 일단은 0.1초 단위의 무음 파일들이 미리 준비되어 있다고 가정하거나...
-        // 여기서는 복잡성을 줄이기 위해 딜레이를 무시하고 진행합니다. (Phase 1 구현 범위 고려)
-        // 또는 간단히: concat demuxer 대신 complex filter로 [0:a][1:a]...concat=n=N:v=0:a=1 처리
-        // 이 경우 무음 구간(adelay) 삽입이 가능해짐.
-        
-        // 여기서는 기존 방식을 유지합니다.
-        return ''; 
-      };
-
-      // !중요! 현재 딜레이 기능은 UI에는 있지만 렌더링에는 반영이 어렵습니다 (오디오 병합 로직의 한계).
-      // 따라서 딜레이는 일단 무시하고 진행합니다. (추후 고도화 필요)
-      
-      concatContent = audioSegments
-        .map((s) => `file '${path.resolve(s.path)}'`) // Ensure path is resolved
+      const concatContent = audioSegments
+        .map((s) => `file '${path.resolve(s.path)}'`) 
         .join('\n');
 
       const concatListPath = path.join(tempDir, `concat_list_${Date.now()}.txt`);
@@ -247,7 +210,12 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
 
       // 4. SFX 입력 (있다면)
       const sfxInputs: { index: number; type: string; startTime: number }[] = [];
-      let currentInputIndex = command._inputs.length; // Current number of inputs
+      
+      // 현재 입력 개수 계산 (이미지 + TTS + BGM?)
+      let currentInputIndex = script.sentences.length + 1; // Images + TTS
+      if (bgmPath && fs.existsSync(bgmPath)) {
+        currentInputIndex++; // BGM
+      }
       
       if (editorSegments) {
         editorSegments.forEach((seg, idx) => {
@@ -398,7 +366,7 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     filters.push(...titleFilters);
 
     // Step 5: 자막
-    const subtitlePathEscaped = subtitlePath.replace(/\/g, '/').replace(/:/g, '\\:');
+    const subtitlePathEscaped = subtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:');
     filters.push(`[titled]ass='${subtitlePathEscaped}'[final_video]`);
 
     // Step 6: 오디오 믹싱 (TTS + BGM + SFX)
@@ -435,22 +403,18 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     return filters;
   }
 
-  // Helper methods (escapeFFmpegText, getFontPath, autoHighlightKeywords, isStopWord, parseTitle, splitIntoLines, buildTitleFilters, measureTextWidths, extractFontFamily)
-  // 기존 코드 그대로 유지 (위에서 생략하지 않고 모두 포함해야 함) 
   
   private escapeFFmpegText(text: string): string {
-    return text.replace(/\/g, '\\').replace(/'/g, "\'").replace(/:/g, '\\:').replace(/\n/g, '\\n');
+    return text.replace(/\\/g, '\\').replace(/'/g, "'\\").replace(/:/g, '\\:').replace(/\n/g, '\\n');
   }
 
   private getFontPath(): string {
     const configuredFontPath = this.config.title.fontPath;
     if (fs.existsSync(configuredFontPath)) return configuredFontPath;
-    // Fallback to a common font path or a project-specific one
-    const fallbackPath = '/System/Library/Fonts/Supplemental/Arial.ttf'; // Example fallback
+    const fallbackPath = '/System/Library/Fonts/Supplemental/Arial.ttf';
     if (fs.existsSync(fallbackPath)) {
         return fallbackPath;
     }
-    // If no system font is found, use a project-specific font
     return path.join(process.cwd(), 'assets', 'fonts', 'Pretendard-Bold.ttf');
   }
 
