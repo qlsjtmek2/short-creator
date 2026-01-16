@@ -140,6 +140,31 @@ export interface ISubtitleGenerator {
 }
 
 /**
+ * Phase 1: Editor Interfaces
+ * 영상 편집기를 위한 데이터 구조
+ */
+
+export interface EditorSegment {
+  id: string; // 고유 ID (UUID)
+  text: string; // 대본 텍스트
+  imageKeyword: string; // 이미지 검색어
+  imageUrl?: string; // 선택된 이미지 URL
+  audioUrl?: string; // TTS 미리보기 URL
+  audioDuration?: number; // 오디오 길이 (초)
+  delay: number; // 오디오 재생 후 대기 시간 (초)
+  sfx?: string; // 효과음 ID (선택)
+  vfx?: string; // 영상 효과 ID (선택)
+}
+
+export interface EditorState {
+  topic: string;
+  segments: EditorSegment[];
+  bgmFile: string;
+  titleFont: string;
+  subtitleFont: string;
+}
+
+/**
  * Phase 15: 스토리 영상 렌더링 모듈 인터페이스
  * FFmpeg를 사용하여 스토리텔링 쇼츠를 생성합니다.
  */
@@ -150,5 +175,6 @@ export interface IStoryVideoRenderer {
     outputPath: string,
     titleFont?: string,
     bgmFile?: string,
+    editorSegments?: EditorSegment[],
   ): Promise<string>;
 }

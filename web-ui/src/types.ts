@@ -9,6 +9,18 @@ export interface AssetGroup {
   selectedImage?: string;
 }
 
+export interface EditorSegment {
+  id: string;
+  text: string;
+  imageKeyword: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  audioDuration?: number;
+  delay: number;
+  sfx?: string;
+  vfx?: string;
+}
+
 export interface JobStatus {
   status: 'processing' | 'completed' | 'failed';
   resultUrl?: string;

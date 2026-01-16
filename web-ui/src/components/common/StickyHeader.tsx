@@ -15,7 +15,7 @@ export default function StickyHeader({
   nextLabel = '다음',
   canGoNext = true,
 }: StickyHeaderProps) {
-  const steps = ['주제', '대본', '짤방', '완료'];
+  const steps = ['주제', '대본', '짤방', '편집', '완료'];
 
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-zinc-950/80 border-b border-zinc-800 transition-all duration-300">

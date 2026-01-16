@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { ScriptSegment, AssetGroup } from '@/types';
+import { ScriptSegment, AssetGroup, EditorSegment } from '@/types';
 import { searchAssets, renderVideo } from '@/lib/api';
 
 // Components
 import Step1_Topic from '@/components/steps/Step1_Topic';
 import Step2_Script from '@/components/steps/Step2_Script';
 import Step3_Assets from '@/components/steps/Step3_Assets';
-import Step4_Render from '@/components/steps/Step4_Render';
+import Step4_Editor from '@/components/steps/Step4_Editor';
+import Step5_Render from '@/components/steps/Step5_Render';
 import StickyHeader from '@/components/common/StickyHeader';
 import SettingsModal from '@/components/common/SettingsModal';
 
@@ -18,6 +19,7 @@ export default function ShortCreator() {
   const [topic, setTopic] = useState('');
   const [script, setScript] = useState<ScriptSegment[]>([]);
   const [assets, setAssets] = useState<AssetGroup[]>([]);
+  const [segments, setSegments] = useState<EditorSegment[]>([]); // New: Editor Segments
   const [jobId, setJobId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -75,13 +77,32 @@ export default function ShortCreator() {
     }
   };
 
-  // Step 3 -> 4
-  const handleStartRender = async () => {
+  // Step 3 -> 4 (Editor)
+  const handleGoToEditor = () => {
+    setStep(4);
+  };
+
+  // Step 4 -> 5 (Render)
+  const handleStartRender = async (finalSegments?: EditorSegment[]) => {
     handleSetLoading(true, '영상 렌더링을 시작합니다...');
     try {
-      const assetUrls = assets.map(
-        (group) => group.selectedImage || group.images[0],
-      );
+      // Editor에서 넘어온 segments가 있으면 사용, 없으면 기존 script/assets 기반으로(하위호환)
+      // 현재 구조에서는 Editor가 segments를 완성해서 넘겨줌.
+      
+      let assetUrls: string[] = [];
+      let finalScript: ScriptSegment[] = script;
+
+      if (finalSegments && finalSegments.length > 0) {
+        setSegments(finalSegments);
+        // EditorSegment -> ScriptSegment & AssetUrls 변환
+        assetUrls = finalSegments.map(s => s.imageUrl || '');
+        finalScript = finalSegments.map(s => ({
+          text: s.text,
+          imageKeyword: s.imageKeyword,
+        }));
+      } else {
+        assetUrls = assets.map((group) => group.selectedImage || group.images[0]);
+      }
 
       // 설정 로드
       let mockTtsSpeed = 1.0;
@@ -98,14 +119,17 @@ export default function ShortCreator() {
         if (parsed.bgmFile) bgmFile = parsed.bgmFile;
       }
 
-      const res = await renderVideo(topic, script, assetUrls, {
+      // TODO: EditorState(segments 정보, 오디오 타이밍 등)를 서버에 전달하도록 renderVideo API 확장 필요
+      // 일단은 기존 방식대로 렌더링
+      const res = await renderVideo(topic, finalScript, assetUrls, {
         mockTtsSpeed,
         titleFont,
         subtitleFont,
         bgmFile,
+        segments: finalSegments && finalSegments.length > 0 ? finalSegments : undefined,
       });
       setJobId(res.jobId);
-      setStep(4);
+      setStep(5);
     } catch (error) {
       console.error(error);
       alert('렌더링 요청에 실패했습니다.');
@@ -116,13 +140,17 @@ export default function ShortCreator() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-purple-500/30">
-      {/* Sticky Header (Visible from Step 2) */}
-      {step > 1 && step < 4 && (
+      {/* Sticky Header (Visible from Step 2 to 4) */}
+      {step > 1 && step < 5 && (
         <StickyHeader
           step={step}
           onBack={() => setStep(step - 1)}
-          onNext={step === 2 ? handleGoToAssets : handleStartRender}
-          nextLabel={step === 2 ? '짤방 선택' : '영상 만들기'}
+          onNext={
+            step === 2 ? handleGoToAssets : 
+            step === 3 ? handleGoToEditor :
+            undefined // Editor에서는 내부 버튼으로 진행
+          }
+          nextLabel={step === 2 ? '짤방 선택' : '편집하기'}
         />
       )}
 
@@ -156,13 +184,24 @@ export default function ShortCreator() {
           />
         )}
 
-        {step === 4 && jobId && (
-          <Step4_Render
+        {step === 4 && (
+          <Step4_Editor
+            topic={topic}
+            script={script}
+            assets={assets}
+            onNext={handleStartRender}
+            onBack={() => setStep(3)}
+          />
+        )}
+
+        {step === 5 && jobId && (
+          <Step5_Render
             jobId={jobId}
             onReset={() => window.location.reload()}
           />
         )}
       </div>
+
 
       {/* Settings Modal */}
       <SettingsModal

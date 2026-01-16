@@ -8,6 +8,7 @@ import {
   ITTSProvider,
   ISubtitleGenerator,
   IStoryVideoRenderer,
+  EditorSegment,
 } from '../types/interfaces';
 import {
   StoryScriptWithAssets,
@@ -43,7 +44,7 @@ export class StoryOrchestrator {
 
     // 2. 각 문장별 병렬 처리 (이미지 + TTS)
     console.log(
-      '2️⃣ Downloading images and generating TTS for each sentence...',
+      '2️⃣ Downloading images and generating TTS for each sentence...', 
     );
     const sentencesWithAssets = await Promise.all(
       script.sentences.map(async (sentence, index) => {
@@ -126,6 +127,7 @@ export class StoryOrchestrator {
       titleFont?: string;
       subtitleFont?: string;
       bgmFile?: string;
+      editorSegments?: EditorSegment[];
     },
   ): Promise<string> {
     console.log(`\n🎬 Generating interactive story shorts: "${title}"`);
@@ -145,6 +147,9 @@ export class StoryOrchestrator {
       script.sentences.map(async (sentence, index) => {
         let imageUrl = imageUrls[index];
         const uniqueId = `${Date.now()}_${index}`;
+
+        // EditorSegment 정보가 있으면 활용 가능 (여기서는 단순 참조용, 실제 다운로드는 아래 로직 따름)
+        const editorSeg = options?.editorSegments ? options.editorSegments[index] : null;
 
         // 2-1. 이미지 다운로드 (URL -> 파일)
         const imagePath = path.join(
@@ -184,12 +189,20 @@ export class StoryOrchestrator {
         console.log(
           `  - Downloading image for scene ${index + 1}: ${imageUrl}`,
         );
-        const response = await axios.get(imageUrl, {
-          responseType: 'arraybuffer',
-        });
-        fs.writeFileSync(imagePath, response.data);
+        try {
+          const response = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+          });
+          fs.writeFileSync(imagePath, response.data);
+        } catch (e) {
+          console.error(`  ❌ Failed to download image: ${imageUrl}`, e);
+          // 실패 시 플레이스홀더나 재시도 로직이 필요하지만, 여기서는 에러 발생
+          throw e;
+        }
 
-        // 2-2. TTS 생성 (기존 로직 사용)
+        // 2-2. TTS 생성
+        // EditorSegment에 audioUrl이 있고 파일이 서버에 있다면 복사 가능하지만,
+        // 경로 매핑이 복잡하므로 안전하게 다시 생성 (MockTTS는 빠름)
         const audioPath = path.join(
           outputDir,
           'audio',
@@ -238,14 +251,19 @@ export class StoryOrchestrator {
       titleFont?: string;
       subtitleFont?: string;
       bgmFile?: string;
+      editorSegments?: EditorSegment[];
     },
   ): Promise<string> {
     // 3. 타임스탬프 계산
     console.log('3️⃣ Calculating timestamps...');
     let currentTime = 0;
-    const sentencesWithTimestamps = sentencesWithAssets.map((s) => {
+    const sentencesWithTimestamps = sentencesWithAssets.map((s, idx) => {
+      // EditorSegment 정보 반영 (Delay)
+      const editorSeg = options?.editorSegments ? options.editorSegments[idx] : null;
+      const delay = editorSeg?.delay || 0;
+      
       const startTime = currentTime;
-      const endTime = currentTime + (s.duration || 3);
+      const endTime = currentTime + (s.duration || 3) + delay; // 오디오 길이 + 딜레이
       currentTime = endTime;
 
       return {
@@ -291,6 +309,7 @@ export class StoryOrchestrator {
       outputPath,
       options?.titleFont,
       options?.bgmFile,
+      options?.editorSegments, // 전달
     );
 
     console.log(`✅ Story shorts created: ${finalVideoPath}\n`);

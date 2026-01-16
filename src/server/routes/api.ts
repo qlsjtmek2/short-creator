@@ -25,8 +25,10 @@ import { StoryOrchestrator } from '../../StoryOrchestrator';
 // Types & Config
 import { StoryScript } from '../../../types/common';
 import { IImageProvider } from '../../../types/interfaces';
+import { getAudioDuration } from '../../utils/audio';
 
 dotenv.config();
+
 
 const router = Router();
 
@@ -252,6 +254,7 @@ router.post('/render', async (req, res) => {
       titleFont,
       subtitleFont,
       bgmFile,
+      segments, // New
     } = req.body;
     console.log(`🎬 Requesting render for "${topic}"`);
 
@@ -282,6 +285,7 @@ router.post('/render', async (req, res) => {
             titleFont,
             subtitleFont,
             bgmFile,
+            editorSegments: segments, // 전달
           },
         );
 
@@ -326,6 +330,40 @@ router.get('/status/:jobId', (req, res) => {
   }
 
   res.json(status);
+});
+
+// 4.5. TTS 미리보기 (Preview TTS)
+router.post('/preview/tts', async (req, res) => {
+  try {
+    const { text, character = 'narrator', speed = 1.0 } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    // MockTTSProvider의 경우 속도 설정
+    if (ttsProvider instanceof MockTTSProvider) {
+      ttsProvider.speed = Number(speed);
+    }
+
+    const audioPath = await ttsProvider.generateAudio(text, character);
+    
+    // Duration 측정
+    const duration = await getAudioDuration(audioPath);
+
+    // URL 변환 (로컬 파일 경로 -> 웹 URL)
+    const relativePath = path.relative(path.join(process.cwd(), 'output'), audioPath);
+    const audioUrl = `/output/${relativePath}`;
+
+    res.json({
+      audioUrl,
+      duration,
+    });
+
+  } catch (error) {
+    console.error('Error generating preview TTS:', error);
+    res.status(500).json({ error: 'Failed to generate preview TTS' });
+  }
 });
 
 // 5. 서버 설정 상태 조회 (Config Check)
