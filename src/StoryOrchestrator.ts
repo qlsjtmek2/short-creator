@@ -317,6 +317,36 @@ export class StoryOrchestrator {
   }
 
   /**
+   * (Phase 21) Manifest 기반 렌더링
+   */
+  async renderWithManifest(
+    manifest: any, // RenderManifest type
+    outputDir: string,
+    options?: {
+      titleFont?: string;
+    }
+  ): Promise<string> {
+    console.log('🎬 Rendering video from Manifest...');
+    const outputPath = path.join(
+      outputDir,
+      'videos',
+      `manifest_story_${Date.now()}.mp4`,
+    );
+
+    // FFmpegRenderer가 Manifest 모드를 지원한다고 가정 (타입 캐스팅 필요할 수 있음)
+    // 실제로는 인터페이스에 메서드를 추가해야 함.
+    if ('renderFromManifest' in this.videoRenderer) {
+        return (this.videoRenderer as any).renderFromManifest(
+            manifest,
+            outputPath,
+            options?.titleFont
+        );
+    } else {
+        throw new Error('Video renderer does not support manifest rendering');
+    }
+  }
+
+  /**
    * 문장을 더 작은 단위(청크)로 나누어 자막 이벤트를 생성합니다.
    * 영상의 템포를 빠르게 하기 위함입니다.
    */

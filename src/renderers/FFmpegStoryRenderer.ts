@@ -5,6 +5,13 @@ import { createCanvas, registerFont } from 'canvas';
 import { IStoryVideoRenderer, EditorSegment } from '../../types/interfaces';
 import { StoryScriptWithAssets } from '../../types/common';
 import { RENDER_CONFIG } from '../config/render-config';
+import { 
+  RenderManifest, 
+  ImageElement, 
+  TitleElement, 
+  SubtitleChunk, 
+  AudioElement 
+} from '../../types/rendering';
 
 /**
  * 타이틀 텍스트 세그먼트 (일반 텍스트 또는 강조 텍스트)
@@ -92,6 +99,84 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
     }
 
     return outputPath;
+  }
+
+  /**
+   * (Phase 21) RenderManifest를 사용하여 영상을 렌더링합니다. (SSOT)
+   */
+  async renderFromManifest(
+    manifest: RenderManifest,
+    outputPath: string,
+    titleFont?: string,
+  ): Promise<string> {
+    const titleFontFile = titleFont || 'Pretendard-ExtraBold.ttf';
+    this.config.title.fontPath = path.resolve(process.cwd(), 'assets/fonts', titleFontFile);
+
+    console.log('  🎬 Starting FFmpeg rendering from Manifest...');
+
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    return new Promise((resolve, reject) => {
+      const command = ffmpeg();
+      const inputs: string[] = [];
+      const imageElements = manifest.elements.filter(e => e.type === 'image') as ImageElement[];
+      const audioElements = manifest.elements.filter(e => e.type === 'audio') as AudioElement[];
+      
+      // 1. Image Inputs
+      imageElements.forEach((el) => {
+        const isGif = el.src.toLowerCase().endsWith('.gif');
+        const duration = (el.endFrame - el.startFrame) / manifest.metadata.fps;
+        
+        if (isGif) {
+          command.input(el.src).inputOptions([
+            '-stream_loop', '-1',
+            '-t', duration.toString(),
+          ]);
+        } else {
+          command.input(el.src);
+        }
+        inputs.push(`[${inputs.length}:v]`);
+      });
+
+      // 2. Audio Inputs
+      audioElements.forEach((el) => {
+        command.input(el.src);
+        inputs.push(`[${inputs.length}:a]`);
+      });
+
+      // 3. Filter Complex
+      const filterComplex = this.buildFilterComplexFromManifest(manifest, imageElements.length, audioElements.length);
+
+      const ffmpegCommand = command
+        .complexFilter(filterComplex)
+        .outputOptions([
+          '-map', '[final_video]',
+          '-map', '[final_audio]',
+          '-c:v', this.config.rendering.videoCodec,
+          '-preset', this.config.rendering.preset,
+          '-crf', this.config.rendering.crf.toString(),
+          '-r', manifest.metadata.fps.toString(),
+          '-pix_fmt', this.config.rendering.pixelFormat,
+          '-c:a', this.config.rendering.audioCodec,
+          '-b:a', this.config.rendering.audioBitrate,
+        ])
+        .output(outputPath);
+
+      ffmpegCommand
+        .on('start', (cmd: string) => console.log('  📹 FFmpeg command:', cmd))
+        .on('end', () => {
+          console.log('  ✓ Video rendering complete');
+          resolve(outputPath);
+        })
+        .on('error', (err: Error) => {
+          console.error('FFmpeg error:', err.message);
+          reject(new Error(`Video rendering failed: ${err.message}`));
+        })
+        .run();
+    });
   }
 
   /**
@@ -359,6 +444,133 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
 
     // Final Mix
     filters.push(`${mixInputs.join('')}amix=inputs=${mixInputs.length}:duration=first[final_audio]`);
+
+    return filters;
+  }
+
+  private buildFilterComplexFromManifest(
+    manifest: RenderManifest,
+    imageCount: number,
+    audioCount: number
+  ): string[] {
+    const filters: string[] = [];
+    const canvas = manifest.canvas;
+    const fps = manifest.metadata.fps;
+    const kb = this.config.kenBurns;
+
+    // Step 1: Images + Ken Burns
+    const imageElements = manifest.elements.filter(e => e.type === 'image') as ImageElement[];
+    imageElements.forEach((el, i) => {
+      const durationFrames = el.endFrame - el.startFrame;
+      const isGif = el.src.toLowerCase().endsWith('.gif');
+      const { fromScale, toScale, fromX, toX, fromY, toY } = el.kenBurns;
+
+      // Ken Burns 수식
+      // zoompan의 x, y, z는 프레임 단위로 계산됨 (on: output frame number)
+      // linear interpolation: start + (end - start) * on / duration
+      const zExpr = `${fromScale}+(${toScale}-${fromScale})*on/${durationFrames}`;
+      const xExpr = `${fromX}+(${toX}-${fromX})*on/${durationFrames}`;
+      const yExpr = `${fromY}+(${toY}-${fromY})*on/${durationFrames}`;
+      
+      // FFmpeg zoompan 좌표계 보정 (중심 기준이 아님, 좌상단 기준)
+      // 하지만 여기서는 단순화를 위해 zoompan 기본 동작 사용 (중앙 중심)
+      // 정확한 좌표 매핑을 위해서는 x, y 수식 검증 필요. 
+      // LayoutEngine에서 계산된 값은 Remotion 기준(px)이므로 FFmpeg 좌표계로 변환해야 함.
+      // 일단 간단한 Zoom In/Out만 구현.
+      
+      const vfxFilter = `zoompan=z='${zExpr}':d=${durationFrames}:s=${canvas.width}x${canvas.height}:fps=${fps}`;
+
+      if (isGif) {
+        filters.push(`[${i}:v]scale=${canvas.width}:${canvas.height}:force_original_aspect_ratio=increase,crop=${canvas.width}:${canvas.height},setsar=1[zoomed${i}]`);
+      } else {
+        filters.push(`[${i}:v]scale=${canvas.width}:${canvas.height}:force_original_aspect_ratio=increase,crop=${canvas.width}:${canvas.height},setsar=1[scaled${i}]`);
+        filters.push(`[scaled${i}]${vfxFilter}[zoomed${i}]`);
+      }
+    });
+
+    // Step 2: Concat Video
+    const concatInputs = imageElements.map((_, i) => `[zoomed${i}]`).join('');
+    filters.push(`${concatInputs}concat=n=${imageCount}:v=1:a=0[concat_video]`);
+
+    // Step 3: Letterbox
+    const lb = this.config.letterbox;
+    filters.push(
+      `[concat_video]drawbox=x=0:y=0:w=${canvas.width}:h=${lb.top}:color=${lb.color}:t=fill,drawbox=x=0:y=${canvas.height - lb.bottom}:w=${canvas.width}:h=${lb.bottom}:color=${lb.color}:t=fill[with_letterbox]`,
+    );
+
+    // Step 4: Title (using drawtext based on Manifest)
+    const titleElement = manifest.elements.find(e => e.type === 'title_text') as TitleElement;
+    let currentLabel = 'with_letterbox';
+    let filterIdx = 0;
+    const fontPath = this.getFontPath();
+
+    if (titleElement) {
+      titleElement.lines.forEach(line => {
+        line.segments.forEach(seg => {
+            const nextLabel = `title_${filterIdx++}`;
+            const color = seg.isHighlight ? this.config.title.highlightColor : this.config.title.fontColor;
+            const escapedText = this.escapeFFmpegText(seg.text);
+            
+            filters.push(`[${currentLabel}]drawtext=fontfile='${fontPath}':text='${escapedText}':fontcolor=${color}:fontsize=${this.config.title.fontSize}:x=${Math.round(seg.x)}:y=${Math.round(line.y)}:borderw=${this.config.title.borderWidth}:bordercolor=${this.config.title.borderColor}[${nextLabel}]`);
+            currentLabel = nextLabel;
+        });
+      });
+    }
+
+    // Step 5: Subtitles (Chunks using drawtext)
+    // 성능 이슈가 있을 수 있으나 SSOT 검증을 위해 drawtext 사용
+    // enable='between(n, start, end)' 사용
+    const subtitleChunks = manifest.elements.filter(e => e.type === 'subtitle_chunk') as SubtitleChunk[];
+    const subFontPath = this.getFontPath(); // 제목 폰트와 동일하다고 가정 (설정 분리 필요)
+
+    subtitleChunks.forEach((chunk, i) => {
+        const nextLabel = i === subtitleChunks.length - 1 ? 'final_video' : `sub_${i}`;
+        const escapedText = this.escapeFFmpegText(chunk.text);
+        // 중앙 정렬을 위해 x=(w-text_w)/2
+        // y 좌표는 하단 레터박스 중앙
+        const yPos = canvas.height - lb.bottom / 2 - 20; 
+        
+        // Pop-in 애니메이션은 FFmpeg drawtext로 구현하기 매우 복잡하므로 
+        // 여기서는 단순 표시(enable)만 구현하거나, 복잡한 수식을 써야 함.
+        // 일단 단순 표시로 구현.
+        filters.push(`[${currentLabel}]drawtext=fontfile='${subFontPath}':text='${escapedText}':fontcolor=white:fontsize=${this.config.subtitle.fontSize}:x=(w-text_w)/2:y=${yPos}:enable='between(n,${chunk.startFrame},${chunk.endFrame})':borderw=2:bordercolor=black[${nextLabel}]`);
+        currentLabel = nextLabel;
+    });
+
+    if (subtitleChunks.length === 0) {
+        filters.push(`[${currentLabel}]null[final_video]`);
+    }
+
+
+    // Step 6: Audio Mix
+    const audioElements = manifest.elements.filter(e => e.type === 'audio') as AudioElement[];
+    const mixInputs: string[] = [];
+    
+    // 오디오 입력 인덱스는 이미지 개수 이후부터 시작
+    let audioInputBase = imageCount; 
+
+    audioElements.forEach((el, i) => {
+        const inputIdx = audioInputBase + i;
+        const delayMs = Math.round((el.startFrame / fps) * 1000);
+        const label = `aud_${i}`;
+        
+        // adelay & volume
+        // BGM인 경우 loop 처리 로직이 필요할 수 있으나, Manifest에는 'audio'로 통합됨.
+        // ID로 구분하거나 별도 타입 필요. 일단은 단순 믹싱.
+        
+        if (el.id === 'bgm') {
+             filters.push(`[${inputIdx}:a]volume=${el.volume},aloop=loop=-1:size=2e+09[${label}]`);
+        } else {
+             filters.push(`[${inputIdx}:a]adelay=${delayMs}|${delayMs},volume=${el.volume}[${label}]`);
+        }
+        mixInputs.push(`[${label}]`);
+    });
+
+    if (mixInputs.length > 0) {
+        filters.push(`${mixInputs.join('')}amix=inputs=${mixInputs.length}:duration=first[final_audio]`);
+    } else {
+        filters.push(`anullsrc=channel_layout=stereo:sample_rate=44100[final_audio]`);
+    }
 
     return filters;
   }

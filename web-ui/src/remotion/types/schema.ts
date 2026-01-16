@@ -79,3 +79,72 @@ export type TextLayer = z.infer<typeof TextLayerSchema>;
 export type AudioLayer = z.infer<typeof AudioLayerSchema>;
 export type ShortsComposition = z.infer<typeof ShortsCompositionSchema>;
 export type VideoLayer = ImageLayer | TextLayer | AudioLayer;
+
+// --- Manifest Schema (SSOT Phase 21) ---
+
+export const ManifestImageElementSchema = z.object({
+  type: z.literal('image'),
+  id: z.string(),
+  src: z.string(),
+  startFrame: z.number(),
+  endFrame: z.number(),
+  vfx: z.string().optional(),
+  kenBurns: KenBurnsSchema,
+});
+
+export const ManifestTitleSegmentSchema = z.object({
+  text: z.string(),
+  isHighlight: z.boolean(),
+  x: z.number(),
+  width: z.number(),
+});
+
+export const ManifestTitleLineSchema = z.object({
+  segments: z.array(ManifestTitleSegmentSchema),
+  y: z.number(),
+  totalWidth: z.number(),
+});
+
+export const ManifestTitleElementSchema = z.object({
+  type: z.literal('title_text'),
+  id: z.string(),
+  lines: z.array(ManifestTitleLineSchema),
+});
+
+export const ManifestSubtitleChunkSchema = z.object({
+  type: z.literal('subtitle_chunk'),
+  id: z.string(),
+  text: z.string(),
+  startFrame: z.number(),
+  endFrame: z.number(),
+});
+
+export const ManifestAudioElementSchema = z.object({
+  type: z.literal('audio'),
+  id: z.string(),
+  src: z.string(),
+  startFrame: z.number(),
+  endFrame: z.number(),
+  volume: z.number(),
+});
+
+export const RenderManifestSchema = z.object({
+  version: z.string(),
+  canvas: z.object({
+    width: z.number(),
+    height: z.number(),
+  }),
+  elements: z.array(z.discriminatedUnion('type', [
+    ManifestImageElementSchema,
+    ManifestTitleElementSchema,
+    ManifestSubtitleChunkSchema,
+    ManifestAudioElementSchema,
+  ])),
+  metadata: z.object({
+    totalFrames: z.number(),
+    fps: z.number(),
+    title: z.string(),
+  }),
+});
+
+export type RenderManifest = z.infer<typeof RenderManifestSchema>;

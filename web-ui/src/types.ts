@@ -26,3 +26,17 @@ export interface JobStatus {
   resultUrl?: string;
   error?: string;
 }
+
+export interface RenderManifest {
+  version: string;
+  canvas: {
+    width: number;
+    height: number;
+  };
+  elements: any[]; // 구체적인 타입은 필요할 때 정의
+  metadata: {
+    totalFrames: number;
+    fps: number;
+    title: string;
+  };
+}

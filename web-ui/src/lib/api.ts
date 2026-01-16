@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ScriptSegment, JobStatus, EditorSegment } from '../types';
+import { ScriptSegment, JobStatus, EditorSegment, RenderManifest } from '../types';
 
 // localhost 대신 127.0.0.1 사용 (Node.js 버전 간 IPv4/IPv6 충돌 방지)
 const API_BASE_URL = 'http://127.0.0.1:3001/api';
@@ -50,6 +50,7 @@ export const renderVideo = async (
     subtitleFont?: string;
     bgmFile?: string;
     segments?: EditorSegment[];
+    manifest?: RenderManifest;
   },
 ) => {
   const response = await api.post('/render', {
@@ -84,5 +85,13 @@ export const previewTTS = async (
   speed?: number,
 ): Promise<{ audioUrl: string; duration: number }> => {
   const response = await api.post('/preview/tts', { text, character, speed });
+  return response.data;
+};
+
+export const getRenderManifest = async (
+  script: { title: string; sentences: { text: string; imagePath?: string; audioPath?: string; duration?: number }[] },
+  editorSegments: EditorSegment[]
+): Promise<RenderManifest> => {
+  const response = await api.post('/render-manifest', { script, editorSegments });
   return response.data;
 };

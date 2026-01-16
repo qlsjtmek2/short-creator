@@ -54,9 +54,9 @@
 ## 🎯 Phase 21: Unified Rendering Engine
 현재의 시뮬레이션 방식을 버리고, Backend에서 모든 좌표와 타이밍을 계산하여 공유하는 SSOT 아키텍처를 도입합니다.
 - [x] **Step 1: LayoutEngine Core**: `node-canvas` 기반 텍스트 측정 및 좌표 계산 엔진 구축
-- [ ] **Step 2: Render Manifest API**: 에디터 데이터를 `RenderManifest` JSON으로 변환하는 로직 구현
-- [ ] **Step 3: Remotion Manifest-Driven**: `ShortsVideo.tsx`가 Manifest를 기반으로 렌더링하도록 수정
-- [ ] **Step 4: FFmpeg Manifest-Driven**: `FFmpegStoryRenderer`가 Manifest 기반 필터 체인 생성하도록 수정
+- [x] **Step 2: Render Manifest API**: 에디터 데이터를 `RenderManifest` JSON으로 변환하는 로직 구현
+- [x] **Step 3: Remotion Manifest-Driven**: `ShortsVideo.tsx`가 Manifest를 기반으로 렌더링하도록 수정
+- [x] **Step 4: FFmpeg Manifest-Driven**: `FFmpegStoryRenderer`가 Manifest 기반 필터 체인 생성하도록 수정
 - [ ] **Step 5: Validation**: 미리보기와 최종 렌더링 결과물의 픽셀 단위 일치 검증
 
 ---

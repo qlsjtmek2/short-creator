@@ -19,6 +19,9 @@ import { MockTTSProvider } from '../../providers/MockTTSProvider';
 // Renderers
 import { FFmpegStoryRenderer } from '../../renderers/FFmpegStoryRenderer';
 
+// Core
+import { LayoutEngine } from '../../core/LayoutEngine';
+
 // Orchestrator
 import { StoryOrchestrator } from '../../StoryOrchestrator';
 
@@ -47,6 +50,7 @@ const jobStore = new Map<string, JobStatus>();
 const storyGenerator = new GeminiStoryGenerator();
 const subtitleGenerator = new SubtitleGenerator();
 const videoRenderer = new FFmpegStoryRenderer();
+const layoutEngine = new LayoutEngine();
 
 // Image Providers
 const pexelsProvider = new PexelsImageProvider(
@@ -255,6 +259,7 @@ router.post('/render', async (req, res) => {
       subtitleFont,
       bgmFile,
       segments, // New
+      manifest, // New: Phase 21
     } = req.body;
     console.log(`🎬 Requesting render for "${topic}"`);
 
@@ -276,18 +281,31 @@ router.post('/render', async (req, res) => {
     (async () => {
       try {
         console.log(`🚀 Starting background render job: ${jobId}`);
-        const finalVideoPath = await orchestrator.generateStoryFromAssets(
-          topic,
-          script,
-          assetUrls,
-          OUTPUT_DIR,
-          {
-            titleFont,
-            subtitleFont,
-            bgmFile,
-            editorSegments: segments, // 전달
-          },
-        );
+        let finalVideoPath: string;
+
+        if (manifest) {
+            // Phase 21: Manifest 기반 렌더링
+            console.log('  Using Render Manifest...');
+            finalVideoPath = await orchestrator.renderWithManifest(
+                manifest,
+                OUTPUT_DIR,
+                { titleFont }
+            );
+        } else {
+            // 기존 렌더링
+            finalVideoPath = await orchestrator.generateStoryFromAssets(
+            topic,
+            script,
+            assetUrls,
+            OUTPUT_DIR,
+            {
+                titleFont,
+                subtitleFont,
+                bgmFile,
+                editorSegments: segments, // 전달
+            },
+            );
+        }
 
         const relativePath = path.relative(
           path.join(process.cwd(), 'output'),
@@ -363,6 +381,24 @@ router.post('/preview/tts', async (req, res) => {
   } catch (error) {
     console.error('Error generating preview TTS:', error);
     res.status(500).json({ error: 'Failed to generate preview TTS' });
+  }
+});
+
+// 4.6 렌더링 매니페스트 생성 (Render Manifest)
+router.post('/render-manifest', (req, res) => {
+  try {
+    const { script, editorSegments } = req.body;
+
+    if (!script || !editorSegments) {
+      return res.status(400).json({ error: 'Script and editorSegments are required' });
+    }
+
+    const manifest = layoutEngine.generateManifest(script, editorSegments);
+    res.json(manifest);
+
+  } catch (error) {
+    console.error('Error generating render manifest:', error);
+    res.status(500).json({ error: 'Failed to generate render manifest' });
   }
 });
 
