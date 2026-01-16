@@ -4,8 +4,12 @@ import { generateDraft, fetchRecommendedTopics } from '@/lib/api';
 import { ScriptSegment } from '@/types';
 
 interface Step1Props {
-  onNext: (topic: string, script: ScriptSegment[]) => void;
-  setLoading: (loading: boolean, text: string) => void;
+  onNext: (
+    topic: string,
+    script: ScriptSegment[],
+    options?: Record<string, unknown>,
+  ) => void;
+  setLoading: (isLoading: boolean, text: string) => void;
   isLoading: boolean;
   onOpenSettings: () => void;
 }
@@ -36,6 +40,12 @@ const DEFAULT_TOPICS = [
   { category: '생활', text: '자취생을 위한 다이소 꿀템 BEST 5' },
 ];
 
+interface TopicItem {
+  category: string;
+  text: string;
+  color?: string;
+}
+
 export default function Step1_Topic({
   onNext,
   setLoading,
@@ -44,17 +54,21 @@ export default function Step1_Topic({
 }: Step1Props) {
   const [topic, setTopic] = useState('');
   const [isRecLoading, setIsRecLoading] = useState(false);
-  
+
   // 초기값: 빈 배열 (Hydration Mismatch 방지)
-  const [recommendedTopics, setRecommendedTopics] = useState<any[]>([]);
+  const [recommendedTopics, setRecommendedTopics] = useState<TopicItem[]>([]);
 
   useEffect(() => {
     // 컴포넌트 마운트 후 클라이언트에서만 랜덤 주제 생성
-    const shuffled = [...DEFAULT_TOPICS].sort(() => 0.5 - Math.random()).slice(0, 5);
-    setRecommendedTopics(shuffled.map(t => ({
-      ...t,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)]
-    })));
+    const shuffled = [...DEFAULT_TOPICS]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 5);
+    setRecommendedTopics(
+      shuffled.map((t) => ({
+        ...t,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      })),
+    );
   }, []);
 
   const loadRecommendations = async () => {
@@ -70,11 +84,15 @@ export default function Step1_Topic({
     } catch (error) {
       console.error('Failed to load recommendations:', error);
       // 에러 시 로컬 풀에서 다시 랜덤 추천
-      const shuffled = [...DEFAULT_TOPICS].sort(() => 0.5 - Math.random()).slice(0, 5);
-      setRecommendedTopics(shuffled.map(t => ({
-        ...t,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)]
-      })));
+      const shuffled = [...DEFAULT_TOPICS]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 5);
+      setRecommendedTopics(
+        shuffled.map((t) => ({
+          ...t,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        })),
+      );
     } finally {
       setIsRecLoading(false);
     }
@@ -177,32 +195,30 @@ export default function Step1_Topic({
                 AI로 새로고침
               </button>
             </div>
-            
+
             <div className="flex flex-wrap gap-3 min-h-[100px]">
-              {isRecLoading || recommendedTopics.length === 0 ? (
-                // 스켈레톤 로딩 UI
-                Array.from({ length: 5 }).map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="h-10 bg-zinc-800/50 rounded-full animate-pulse"
-                    style={{ width: `${100 + (idx * 30) % 100}px` }}
-                  />
-                ))
-              ) : (
-                // 실제 데이터
-                recommendedTopics.map((item, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setTopic(item.text)}
-                    className={`px-4 py-2.5 rounded-full text-sm font-medium border transition-all hover:scale-105 active:scale-95 text-left shadow-sm ${item.color}`}
-                  >
-                    <span className="opacity-70 text-xs mr-2 font-bold">
-                      #{item.category}
-                    </span>
-                    {item.text}
-                  </button>
-                ))
-              )}
+              {isRecLoading || recommendedTopics.length === 0
+                ? // 스켈레톤 로딩 UI
+                  Array.from({ length: 5 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="h-10 bg-zinc-800/50 rounded-full animate-pulse"
+                      style={{ width: `${100 + ((idx * 30) % 100)}px` }}
+                    />
+                  ))
+                : // 실제 데이터
+                  recommendedTopics.map((item, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setTopic(item.text)}
+                      className={`px-4 py-2.5 rounded-full text-sm font-medium border transition-all hover:scale-105 active:scale-95 text-left shadow-sm ${item.color}`}
+                    >
+                      <span className="opacity-70 text-xs mr-2 font-bold">
+                        #{item.category}
+                      </span>
+                      {item.text}
+                    </button>
+                  ))}
             </div>
           </div>
         </div>

@@ -15,11 +15,13 @@ This skill provides a reliable way to download high-quality video and audio from
 Before using this skill, ensure `yt-dlp` and `ffmpeg` are installed.
 
 ### macOS
+
 ```bash
 brew install yt-dlp ffmpeg
 ```
 
 ### Windows
+
 Download `yt-dlp.exe` and `ffmpeg` binaries and add them to PATH.
 
 ## 🚀 Usage
@@ -57,15 +59,19 @@ yt-dlp -x --audio-format mp3 -o "playlist/%(playlist_index)s - %(title)s.%(ext)s
 Use the provided scripts for simplified execution.
 
 ### Scripts
+
 - **`scripts/download_audio.sh`**: Download audio as MP3
 - **`scripts/download_video.sh`**: Download best quality video
 
 ## ⚠️ Troubleshooting
 
 ### 403 Forbidden / Sign in to confirm you're not a bot
+
 YouTube frequently updates its anti-bot protection.
+
 1. Update `yt-dlp`: `yt-dlp -U`
 2. Use cookies: Export cookies from your browser (using "Get cookies.txt" extension) and use `--cookies cookies.txt`.
 
 ### FFmpeg not found
+
 Ensure `ffmpeg` is installed and in your system PATH. `yt-dlp` relies on it for merging and conversion.

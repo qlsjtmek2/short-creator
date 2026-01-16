@@ -2,7 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { ScriptSegment, AssetGroup, EditorSegment, RenderManifest } from '@/types';
+import {
+  ScriptSegment,
+  AssetGroup,
+  EditorSegment,
+  RenderManifest,
+} from '@/types';
 import { searchAssets, renderVideo } from '@/lib/api';
 
 // Components
@@ -19,8 +24,6 @@ export default function ShortCreator() {
   const [topic, setTopic] = useState('');
   const [script, setScript] = useState<ScriptSegment[]>([]);
   const [assets, setAssets] = useState<AssetGroup[]>([]);
-  const [segments, setSegments] = useState<EditorSegment[]>([]); // New: Editor Segments
-  const [manifest, setManifest] = useState<RenderManifest | null>(null); // New: Phase 21
   const [jobId, setJobId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -84,12 +87,15 @@ export default function ShortCreator() {
   };
 
   // Step 4 -> 5 (Render)
-  const handleStartRender = async (finalSegments?: EditorSegment[], finalManifest?: RenderManifest) => {
+  const handleStartRender = async (
+    finalSegments?: EditorSegment[],
+    finalManifest?: RenderManifest,
+  ) => {
     handleSetLoading(true, '영상 렌더링을 시작합니다...');
     try {
       // Editor에서 넘어온 segments가 있으면 사용, 없으면 기존 script/assets 기반으로(하위호환)
       // 현재 구조에서는 Editor가 segments를 완성해서 넘겨줌.
-      
+
       let assetUrls: string[] = [];
       let finalScript: ScriptSegment[] = script;
 
@@ -98,13 +104,15 @@ export default function ShortCreator() {
         if (finalManifest) setManifest(finalManifest);
 
         // EditorSegment -> ScriptSegment & AssetUrls 변환
-        assetUrls = finalSegments.map(s => s.imageUrl || '');
-        finalScript = finalSegments.map(s => ({
+        assetUrls = finalSegments.map((s) => s.imageUrl || '');
+        finalScript = finalSegments.map((s) => ({
           text: s.text,
           imageKeyword: s.imageKeyword,
         }));
       } else {
-        assetUrls = assets.map((group) => group.selectedImage || group.images[0]);
+        assetUrls = assets.map(
+          (group) => group.selectedImage || group.images[0],
+        );
       }
 
       // 설정 로드
@@ -128,7 +136,8 @@ export default function ShortCreator() {
         titleFont,
         subtitleFont,
         bgmFile,
-        segments: finalSegments && finalSegments.length > 0 ? finalSegments : undefined,
+        segments:
+          finalSegments && finalSegments.length > 0 ? finalSegments : undefined,
         manifest: finalManifest, // Pass manifest to server
       });
       setJobId(res.jobId);
@@ -149,9 +158,11 @@ export default function ShortCreator() {
           step={step}
           onBack={() => setStep(step - 1)}
           onNext={
-            step === 2 ? handleGoToAssets : 
-            step === 3 ? handleGoToEditor :
-            undefined // Editor에서는 내부 버튼으로 진행
+            step === 2
+              ? handleGoToAssets
+              : step === 3
+                ? handleGoToEditor
+                : undefined // Editor에서는 내부 버튼으로 진행
           }
           nextLabel={step === 2 ? '짤방 선택' : '편집하기'}
         />
@@ -204,7 +215,6 @@ export default function ShortCreator() {
           />
         )}
       </div>
-
 
       {/* Settings Modal */}
       <SettingsModal

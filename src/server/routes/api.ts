@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Generators
 import { GeminiStoryGenerator } from '../../generators/GeminiStoryGenerator';
@@ -31,7 +32,6 @@ import { IImageProvider } from '../../../types/interfaces';
 import { getAudioDuration } from '../../utils/audio';
 
 dotenv.config();
-
 
 const router = Router();
 
@@ -146,19 +146,39 @@ router.post('/draft', async (req, res) => {
 router.get('/recommend', async (req, res) => {
   try {
     console.log('💡 Generating recommended topics...');
-    
+
     // 무작위성을 위한 테마 풀 (25개)
     const THEMES = [
-      '미스터리', '공포/괴담', '역사 속 비밀', '우주/과학', '심해의 신비',
-      '미래 기술', '흥미로운 심리학', '동물 퀴즈', '세계의 불가사의', '충격적인 실화',
-      '밸런스 게임', '만약에 시리즈', '생활 꿀팁', '음식 월드컵', '여행지 추천',
-      '성격 유형(MBTI)', '연애 심리', '도시 전설', '기묘한 발명품', '역설/딜레마',
-      '초능력 상상', '좀비 아포칼립스', '시간 여행', '평행 우주', '꿈 해몽'
+      '미스터리',
+      '공포/괴담',
+      '역사 속 비밀',
+      '우주/과학',
+      '심해의 신비',
+      '미래 기술',
+      '흥미로운 심리학',
+      '동물 퀴즈',
+      '세계의 불가사의',
+      '충격적인 실화',
+      '밸런스 게임',
+      '만약에 시리즈',
+      '생활 꿀팁',
+      '음식 월드컵',
+      '여행지 추천',
+      '성격 유형(MBTI)',
+      '연애 심리',
+      '도시 전설',
+      '기묘한 발명품',
+      '역설/딜레마',
+      '초능력 상상',
+      '좀비 아포칼립스',
+      '시간 여행',
+      '평행 우주',
+      '꿈 해몽',
     ];
 
     // 랜덤하게 3개의 테마 선택
     const selectedThemes = THEMES.sort(() => 0.5 - Math.random()).slice(0, 3);
-    
+
     // Gemini에게 요청할 프롬프트 구성
     const prompt = `
 유튜브 쇼츠 영상으로 만들면 좋을 흥미로운 주제 5가지를 추천해줘.
@@ -183,19 +203,16 @@ router.get('/recommend', async (req, res) => {
     // 하지만 현재 구조상 직접 구현이 어려우므로 storyGenerator를 활용하되,
     // StoryGenerator가 IStoryGenerator 인터페이스를 따르므로, 임시로 로컬 인스턴스를 생성하거나
     // GoogleGenerativeAI를 직접 import해서 사용함.
-    
-    // *직접 GoogleGenerativeAI 호출 (api.ts 상단에 import 되어 있다고 가정)*
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash', // 요청에 따라 gemini-2.5-flash 사용
-      generationConfig: { temperature: 1.2 } // 높은 창의성
-    });
 
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash', // 요청에 따라 gemini-2.5-flash 사용
+      generationConfig: { temperature: 1.2 }, // 높은 창의성
+    });
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     const jsonStr = text.replace(/```json|```/g, '').trim();
-    
+
     let recommendations;
     try {
       recommendations = JSON.parse(jsonStr);
@@ -203,12 +220,14 @@ router.get('/recommend', async (req, res) => {
       // 파싱 실패 시 기본값 반환 (Fail-safe)
       console.error('Failed to parse Gemini recommendation:', e);
       recommendations = [
-        { category: '오류', text: '주제 추천 생성에 실패했습니다. 다시 시도해주세요.' }
+        {
+          category: '오류',
+          text: '주제 추천 생성에 실패했습니다. 다시 시도해주세요.',
+        },
       ];
     }
 
     res.json({ topics: recommendations });
-
   } catch (error) {
     console.error('Error getting recommendations:', error);
     // 에러 발생 시에도 빈 배열보다는 하드코딩된 백업 데이터 반환 가능
@@ -284,27 +303,27 @@ router.post('/render', async (req, res) => {
         let finalVideoPath: string;
 
         if (manifest) {
-            // Phase 21: Manifest 기반 렌더링
-            console.log('  Using Render Manifest...');
-            finalVideoPath = await orchestrator.renderWithManifest(
-                manifest,
-                OUTPUT_DIR,
-                { titleFont }
-            );
+          // Phase 21: Manifest 기반 렌더링
+          console.log('  Using Render Manifest...');
+          finalVideoPath = await orchestrator.renderWithManifest(
+            manifest,
+            OUTPUT_DIR,
+            { titleFont },
+          );
         } else {
-            // 기존 렌더링
-            finalVideoPath = await orchestrator.generateStoryFromAssets(
+          // 기존 렌더링
+          finalVideoPath = await orchestrator.generateStoryFromAssets(
             topic,
             script,
             assetUrls,
             OUTPUT_DIR,
             {
-                titleFont,
-                subtitleFont,
-                bgmFile,
-                editorSegments: segments, // 전달
+              titleFont,
+              subtitleFont,
+              bgmFile,
+              editorSegments: segments, // 전달
             },
-            );
+          );
         }
 
         const relativePath = path.relative(
@@ -365,19 +384,21 @@ router.post('/preview/tts', async (req, res) => {
     }
 
     const audioPath = await ttsProvider.generateAudio(text, character);
-    
+
     // Duration 측정
     const duration = await getAudioDuration(audioPath);
 
     // URL 변환 (로컬 파일 경로 -> 웹 URL)
-    const relativePath = path.relative(path.join(process.cwd(), 'output'), audioPath);
+    const relativePath = path.relative(
+      path.join(process.cwd(), 'output'),
+      audioPath,
+    );
     const audioUrl = `/output/${relativePath}`;
 
     res.json({
       audioUrl,
       duration,
     });
-
   } catch (error) {
     console.error('Error generating preview TTS:', error);
     res.status(500).json({ error: 'Failed to generate preview TTS' });
@@ -390,12 +411,13 @@ router.post('/render-manifest', (req, res) => {
     const { script, editorSegments } = req.body;
 
     if (!script || !editorSegments) {
-      return res.status(400).json({ error: 'Script and editorSegments are required' });
+      return res
+        .status(400)
+        .json({ error: 'Script and editorSegments are required' });
     }
 
     const manifest = layoutEngine.generateManifest(script, editorSegments);
     res.json(manifest);
-
   } catch (error) {
     console.error('Error generating render manifest:', error);
     res.status(500).json({ error: 'Failed to generate render manifest' });

@@ -1,5 +1,10 @@
 import axios from 'axios';
-import { ScriptSegment, JobStatus, EditorSegment, RenderManifest } from '../types';
+import {
+  ScriptSegment,
+  JobStatus,
+  EditorSegment,
+  RenderManifest,
+} from '../types';
 
 // localhost 대신 127.0.0.1 사용 (Node.js 버전 간 IPv4/IPv6 충돌 방지)
 const API_BASE_URL = 'http://127.0.0.1:3001/api';
@@ -89,9 +94,20 @@ export const previewTTS = async (
 };
 
 export const getRenderManifest = async (
-  script: { title: string; sentences: { text: string; imagePath?: string; audioPath?: string; duration?: number }[] },
-  editorSegments: EditorSegment[]
+  script: {
+    title: string;
+    sentences: {
+      text: string;
+      imagePath?: string;
+      audioPath?: string;
+      duration?: number;
+    }[];
+  },
+  editorSegments: EditorSegment[],
 ): Promise<RenderManifest> => {
-  const response = await api.post('/render-manifest', { script, editorSegments });
+  const response = await api.post('/render-manifest', {
+    script,
+    editorSegments,
+  });
   return response.data;
 };

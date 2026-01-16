@@ -4,6 +4,7 @@ import {
   StoryScriptWithAssets,
   SubtitleEvent,
 } from './common';
+import { RenderManifest } from './rendering';
 
 /**
  * Phase 5: 질문 생성 모듈 인터페이스
@@ -128,7 +129,8 @@ export interface IVideoRenderer {
  * Google Gemini API를 사용하여 스토리텔링 대본을 생성합니다.
  */
 export interface IStoryGenerator {
-  generateStory(topic: string): Promise<StoryScript>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  generateStory(topic: string, options?: any): Promise<StoryScript>;
 }
 
 /**
@@ -136,7 +138,7 @@ export interface IStoryGenerator {
  * ASS 자막 파일을 생성합니다.
  */
 export interface ISubtitleGenerator {
-  generateASS(events: SubtitleEvent[], outputPath: string): Promise<string>;
+  generateASS(events: SubtitleEvent[], outputPath: string): Promise<void>;
 }
 
 /**
@@ -176,5 +178,12 @@ export interface IStoryVideoRenderer {
     titleFont?: string,
     bgmFile?: string,
     editorSegments?: EditorSegment[],
+  ): Promise<string>;
+
+  // Phase 21: SSOT Rendering
+  renderFromManifest?(
+    manifest: RenderManifest,
+    outputPath: string,
+    titleFont?: string,
   ): Promise<string>;
 }

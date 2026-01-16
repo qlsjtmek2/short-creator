@@ -32,12 +32,12 @@ export const RENDER_CONFIG = {
     marginV: 500, // ASS MarginV (FFmpeg 렌더링 시 위치)
     maxCharsPerLine: 15,
     animation: {
-        popInDuration: 100,
-        scaleUpStart: 0,
-        scaleUpEnd: 110,
-        scaleDownStart: 0,
-        scaleDownEnd: 0,
-        finalScale: 120,
+      popInDuration: 100,
+      scaleUpStart: 0,
+      scaleUpEnd: 110,
+      scaleDownStart: 0,
+      scaleDownEnd: 0,
+      finalScale: 120,
     },
     wrapping: {
       enabled: true,
@@ -46,7 +46,7 @@ export const RENDER_CONFIG = {
       safetyPadding: 40,
       maxScalePercent: 120,
       fallbackCharsPerLine: 13,
-    }
+    },
   },
   kenBurns: {
     startZoom: 1.0,

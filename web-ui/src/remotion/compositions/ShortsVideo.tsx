@@ -11,12 +11,12 @@ import {
   Easing,
 } from 'remotion';
 import { ShortsComposition, ImageLayer, TextLayer } from '../types/schema';
-import { 
-  autoHighlightKeywords, 
-  splitIntoLines, 
-  parseTitle, 
+import {
+  autoHighlightKeywords,
+  splitIntoLines,
+  parseTitle,
   splitSentenceIntoChunks,
-  FFMPEG_CONFIG 
+  FFMPEG_CONFIG,
 } from '../utils/ffmpeg-simulator';
 
 const { letterbox, title: titleConfig } = FFMPEG_CONFIG;
@@ -25,39 +25,48 @@ const { letterbox, title: titleConfig } = FFMPEG_CONFIG;
 
 const KenBurnsImage: React.FC<{ layer: ImageLayer }> = ({ layer }) => {
   const frame = useCurrentFrame();
-  const relativeFrame = frame; 
+  const relativeFrame = frame;
 
-  const kb = layer.kenBurns || { fromScale: 1, toScale: 1, fromX: 0, toX: 0, fromY: 0, toY: 0 };
+  const kb = layer.kenBurns || {
+    fromScale: 1,
+    toScale: 1,
+    fromX: 0,
+    toX: 0,
+    fromY: 0,
+    toY: 0,
+  };
 
   const scale = interpolate(
     relativeFrame,
     [0, layer.durationInFrames],
     [kb.fromScale, kb.toScale],
-    { easing: Easing.linear, extrapolateRight: 'clamp' }
+    { easing: Easing.linear, extrapolateRight: 'clamp' },
   );
 
   const x = interpolate(
     relativeFrame,
     [0, layer.durationInFrames],
     [kb.fromX, kb.toX],
-    { easing: Easing.linear }
+    { easing: Easing.linear },
   );
 
   const y = interpolate(
     relativeFrame,
     [0, layer.durationInFrames],
     [kb.fromY, kb.toY],
-    { easing: Easing.linear }
+    { easing: Easing.linear },
   );
 
   return (
-    <div style={{
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      transform: `scale(${layer.transform.scale}) rotate(${layer.transform.rotate}deg)`,
-      opacity: layer.transform.opacity,
-    }}>
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        transform: `scale(${layer.transform.scale}) rotate(${layer.transform.rotate}deg)`,
+        opacity: layer.transform.opacity,
+      }}
+    >
       <Img
         src={layer.src}
         style={{
@@ -74,17 +83,20 @@ const KenBurnsImage: React.FC<{ layer: ImageLayer }> = ({ layer }) => {
 const AnimatedSubtitle: React.FC<{ layer: TextLayer }> = ({ layer }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  
+
   // 1. 문장을 청크로 분할
-  const chunks = useMemo(() => splitSentenceIntoChunks(layer.text), [layer.text]);
-  
+  const chunks = useMemo(
+    () => splitSentenceIntoChunks(layer.text),
+    [layer.text],
+  );
+
   // 2. 현재 시간에 해당하는 청크 찾기
   // frame은 Sequence 내부의 상대 시간이므로 0부터 시작
   const currentRatio = frame / layer.durationInFrames;
-  
+
   // 약간의 오차 허용을 위해 find
   const currentChunk = chunks.find(
-    c => currentRatio >= c.startRatio && currentRatio < c.endRatio
+    (c) => currentRatio >= c.startRatio && currentRatio < c.endRatio,
   );
 
   // 청크가 없으면(오차 등으로) 마지막 청크 보여주거나 숨김
@@ -95,7 +107,7 @@ const AnimatedSubtitle: React.FC<{ layer: TextLayer }> = ({ layer }) => {
   // 해당 청크의 시작 프레임 계산
   const chunkStartFrame = currentChunk.startRatio * layer.durationInFrames;
   const relativeFrameInChunk = frame - chunkStartFrame;
-  
+
   const popScale = spring({
     frame: relativeFrameInChunk,
     fps,
@@ -109,25 +121,27 @@ const AnimatedSubtitle: React.FC<{ layer: TextLayer }> = ({ layer }) => {
   });
 
   return (
-    <div style={{
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: letterbox.bottom / 2 - 20, 
-      textAlign: 'center',
-      fontFamily: layer.style.fontFamily,
-      fontSize: layer.style.fontSize,
-      color: layer.style.color,
-      whiteSpace: 'pre-wrap',
-      textShadow: `
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: letterbox.bottom / 2 - 20,
+        textAlign: 'center',
+        fontFamily: layer.style.fontFamily,
+        fontSize: layer.style.fontSize,
+        color: layer.style.color,
+        whiteSpace: 'pre-wrap',
+        textShadow: `
         -2px -2px 0 ${layer.style.strokeColor}, 
          2px -2px 0 ${layer.style.strokeColor}, 
         -2px  2px 0 ${layer.style.strokeColor}, 
          2px  2px 0 ${layer.style.strokeColor}
       `,
-      transform: `scale(${popScale})`,
-      opacity,
-    }}>
+        transform: `scale(${popScale})`,
+        opacity,
+      }}
+    >
       {currentChunk.text}
     </div>
   );
@@ -143,57 +157,67 @@ export const ShortsVideo: React.FC<ShortsComposition> = ({ layers, title }) => {
     return splitIntoLines(markedTitle, titleConfig.maxCharsPerLine);
   }, [title]);
 
-  const baseY = titleLines.length > 1 
-    ? titleConfig.y - titleConfig.lineSpacing / 2 
-    : titleConfig.y;
+  const baseY =
+    titleLines.length > 1
+      ? titleConfig.y - titleConfig.lineSpacing / 2
+      : titleConfig.y;
 
   return (
     <AbsoluteFill style={{ backgroundColor: 'black' }}>
-      
       {/* 1. Video Content (Middle Area) */}
-      <AbsoluteFill style={{ 
-        top: letterbox.top, 
-        bottom: letterbox.bottom,
-        overflow: 'hidden' 
-      }}>
-        {layers.filter(l => l.type === 'image').map((layer) => (
-          <Sequence
-            key={layer.id}
-            from={layer.startFrame}
-            durationInFrames={layer.durationInFrames}
-          >
-            <KenBurnsImage layer={layer as ImageLayer} />
-          </Sequence>
-        ))}
+      <AbsoluteFill
+        style={{
+          top: letterbox.top,
+          bottom: letterbox.bottom,
+          overflow: 'hidden',
+        }}
+      >
+        {layers
+          .filter((l) => l.type === 'image')
+          .map((layer) => (
+            <Sequence
+              key={layer.id}
+              from={layer.startFrame}
+              durationInFrames={layer.durationInFrames}
+            >
+              <KenBurnsImage layer={layer as ImageLayer} />
+            </Sequence>
+          ))}
       </AbsoluteFill>
 
       {/* 2. Audio Layers */}
-      {layers.filter(l => l.type === 'audio').map((layer) => (
-        <Sequence
-          key={layer.id}
-          from={layer.startFrame}
-          durationInFrames={layer.durationInFrames}
-        >
-          <Audio 
-            src={(layer as any).src} 
-            volume={(layer as any).volume} 
-          />
-        </Sequence>
-      ))}
+      {layers
+        .filter((l): l is AudioLayer => l.type === 'audio')
+        .map((layer) => (
+          <Sequence
+            key={layer.id}
+            from={layer.startFrame}
+            durationInFrames={layer.durationInFrames || 1}
+          >
+            <Audio src={layer.src} volume={layer.volume} />
+          </Sequence>
+        ))}
 
       {/* 3. Letterboxes (Top/Bottom Overlay) */}
       {/* 상단 레터박스 */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: letterbox.top,
-        backgroundColor: letterbox.color, zIndex: 10
-      }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: letterbox.top,
+          backgroundColor: letterbox.color,
+          zIndex: 10,
+        }}
+      >
         {/* Title Rendering */}
         {titleLines.map((line, lineIndex) => {
           const segments = parseTitle(line);
           const yPosition = baseY + lineIndex * titleConfig.lineSpacing;
-          
+
           return (
-            <div 
+            <div
               key={lineIndex}
               style={{
                 position: 'absolute',
@@ -205,10 +229,12 @@ export const ShortsVideo: React.FC<ShortsComposition> = ({ layers, title }) => {
               }}
             >
               {segments.map((seg, segIndex) => (
-                <span 
+                <span
                   key={segIndex}
                   style={{
-                    color: seg.isHighlight ? titleConfig.highlightColor : titleConfig.fontColor,
+                    color: seg.isHighlight
+                      ? titleConfig.highlightColor
+                      : titleConfig.fontColor,
                     WebkitTextStroke: `${titleConfig.borderWidth}px ${titleConfig.borderColor}`,
                     paintOrder: 'stroke fill',
                   }}
@@ -222,22 +248,30 @@ export const ShortsVideo: React.FC<ShortsComposition> = ({ layers, title }) => {
       </div>
 
       {/* 하단 레터박스 */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: letterbox.bottom,
-        backgroundColor: letterbox.color, zIndex: 10
-      }}>
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: letterbox.bottom,
+          backgroundColor: letterbox.color,
+          zIndex: 10,
+        }}
+      >
         {/* Subtitles */}
-        {layers.filter(l => l.type === 'text').map((layer) => (
-          <Sequence
-            key={layer.id}
-            from={layer.startFrame}
-            durationInFrames={layer.durationInFrames}
-          >
-            <AnimatedSubtitle layer={layer as TextLayer} />
-          </Sequence>
-        ))}
+        {layers
+          .filter((l) => l.type === 'text')
+          .map((layer) => (
+            <Sequence
+              key={layer.id}
+              from={layer.startFrame}
+              durationInFrames={layer.durationInFrames}
+            >
+              <AnimatedSubtitle layer={layer as TextLayer} />
+            </Sequence>
+          ))}
       </div>
-
     </AbsoluteFill>
   );
 };

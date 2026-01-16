@@ -9,7 +9,7 @@ export const RENDER_CONFIG = {
     color: 'black',
   },
   title: {
-    fontPath: '', 
+    fontPath: '',
     fontFamily: 'Pretendard-ExtraBold',
     fontSize: 100,
     fontColor: 'white',
@@ -32,12 +32,12 @@ export const RENDER_CONFIG = {
     marginV: 500,
     maxCharsPerLine: 15,
     animation: {
-        popInDuration: 100,
-        scaleUpStart: 0,
-        scaleUpEnd: 110,
-        scaleDownStart: 0,
-        scaleDownEnd: 0,
-        finalScale: 120,
+      popInDuration: 100,
+      scaleUpStart: 0,
+      scaleUpEnd: 110,
+      scaleDownStart: 0,
+      scaleDownEnd: 0,
+      finalScale: 120,
     },
     wrapping: {
       enabled: true,
@@ -46,7 +46,7 @@ export const RENDER_CONFIG = {
       safetyPadding: 40,
       maxScalePercent: 120,
       fallbackCharsPerLine: 13,
-    }
+    },
   },
   kenBurns: {
     startZoom: 1.0,

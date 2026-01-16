@@ -65,11 +65,13 @@ export const ShortsCompositionSchema = z.object({
   fps: z.number().default(30),
   durationInFrames: z.number(),
   title: z.string().default(''), // Added
-  layers: z.array(z.discriminatedUnion('type', [
-    ImageLayerSchema,
-    TextLayerSchema,
-    AudioLayerSchema,
-  ])),
+  layers: z.array(
+    z.discriminatedUnion('type', [
+      ImageLayerSchema,
+      TextLayerSchema,
+      AudioLayerSchema,
+    ]),
+  ),
 });
 
 export type Transform = z.infer<typeof TransformSchema>;
@@ -134,12 +136,14 @@ export const RenderManifestSchema = z.object({
     width: z.number(),
     height: z.number(),
   }),
-  elements: z.array(z.discriminatedUnion('type', [
-    ManifestImageElementSchema,
-    ManifestTitleElementSchema,
-    ManifestSubtitleChunkSchema,
-    ManifestAudioElementSchema,
-  ])),
+  elements: z.array(
+    z.discriminatedUnion('type', [
+      ManifestImageElementSchema,
+      ManifestTitleElementSchema,
+      ManifestSubtitleChunkSchema,
+      ManifestAudioElementSchema,
+    ]),
+  ),
   metadata: z.object({
     totalFrames: z.number(),
     fps: z.number(),

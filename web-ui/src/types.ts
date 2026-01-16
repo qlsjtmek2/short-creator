@@ -27,13 +27,23 @@ export interface JobStatus {
   error?: string;
 }
 
+// Manifest Types (Phase 21)
+export interface ManifestElement {
+  id: string;
+  type: 'image' | 'title_text' | 'subtitle_chunk' | 'audio';
+  startFrame: number;
+  endFrame: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any; // Allow other props for now or define strictly
+}
+
 export interface RenderManifest {
   version: string;
   canvas: {
     width: number;
     height: number;
   };
-  elements: any[]; // 구체적인 타입은 필요할 때 정의
+  elements: ManifestElement[];
   metadata: {
     totalFrames: number;
     fps: number;

@@ -15,6 +15,7 @@ import {
   StorySentence,
   SubtitleEvent,
 } from '../types/common';
+import type { RenderManifest } from '../types/rendering';
 
 /**
  * 스토리 파이프라인 전용 오케스트레이터
@@ -44,7 +45,7 @@ export class StoryOrchestrator {
 
     // 2. 각 문장별 병렬 처리 (이미지 + TTS)
     console.log(
-      '2️⃣ Downloading images and generating TTS for each sentence...', 
+      '2️⃣ Downloading images and generating TTS for each sentence...',
     );
     const sentencesWithAssets = await Promise.all(
       script.sentences.map(async (sentence, index) => {
@@ -148,10 +149,8 @@ export class StoryOrchestrator {
         let imageUrl = imageUrls[index];
         const uniqueId = `${Date.now()}_${index}`;
 
-        // EditorSegment 정보가 있으면 활용 가능 (여기서는 단순 참조용, 실제 다운로드는 아래 로직 따름)
-        const editorSeg = options?.editorSegments ? options.editorSegments[index] : null;
-
         // 2-1. 이미지 다운로드 (URL -> 파일)
+
         const imagePath = path.join(
           outputDir,
           'images',
@@ -259,9 +258,11 @@ export class StoryOrchestrator {
     let currentTime = 0;
     const sentencesWithTimestamps = sentencesWithAssets.map((s, idx) => {
       // EditorSegment 정보 반영 (Delay)
-      const editorSeg = options?.editorSegments ? options.editorSegments[idx] : null;
+      const editorSeg = options?.editorSegments
+        ? options.editorSegments[idx]
+        : null;
       const delay = editorSeg?.delay || 0;
-      
+
       const startTime = currentTime;
       const endTime = currentTime + (s.duration || 3) + delay; // 오디오 길이 + 딜레이
       currentTime = endTime;
@@ -320,11 +321,11 @@ export class StoryOrchestrator {
    * (Phase 21) Manifest 기반 렌더링
    */
   async renderWithManifest(
-    manifest: any, // RenderManifest type
+    manifest: RenderManifest,
     outputDir: string,
     options?: {
       titleFont?: string;
-    }
+    },
   ): Promise<string> {
     console.log('🎬 Rendering video from Manifest...');
     const outputPath = path.join(
@@ -333,16 +334,15 @@ export class StoryOrchestrator {
       `manifest_story_${Date.now()}.mp4`,
     );
 
-    // FFmpegRenderer가 Manifest 모드를 지원한다고 가정 (타입 캐스팅 필요할 수 있음)
-    // 실제로는 인터페이스에 메서드를 추가해야 함.
-    if ('renderFromManifest' in this.videoRenderer) {
-        return (this.videoRenderer as any).renderFromManifest(
-            manifest,
-            outputPath,
-            options?.titleFont
-        );
+    // FFmpegRenderer가 Manifest 모드를 지원한다고 가정
+    if (this.videoRenderer.renderFromManifest) {
+      return this.videoRenderer.renderFromManifest(
+        manifest,
+        outputPath,
+        options?.titleFont,
+      );
     } else {
-        throw new Error('Video renderer does not support manifest rendering');
+      throw new Error('Video renderer does not support manifest rendering');
     }
   }
 
