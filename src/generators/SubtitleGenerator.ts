@@ -3,37 +3,11 @@ import * as path from 'path';
 import { createCanvas, registerFont, CanvasRenderingContext2D } from 'canvas';
 import { SubtitleEvent } from '../../types/common';
 import { ISubtitleGenerator } from '../../types/interfaces';
+import { RENDER_CONFIG } from '../config/render-config';
 
 export class SubtitleGenerator implements ISubtitleGenerator {
-  // 기본 설정값 (하드코딩)
-  private config = {
-    fontPath: '', // 생성자에서 설정됨
-    fontSize: 100,
-    primaryColor: '&H00FFFFFF',
-    outlineColor: '&H00000000',
-    backColor: '&H00000000',
-    outline: 8,
-    shadow: 4,
-    alignment: 2,
-    marginV: 500,
-    maxCharsPerLine: 15,
-    wrapping: {
-      enabled: true,
-      marginL: 100,
-      marginR: 100,
-      safetyPadding: 40,
-      maxScalePercent: 120,
-      fallbackCharsPerLine: 13,
-    },
-    animation: {
-      popInDuration: 100,
-      scaleUpStart: 0,
-      scaleUpEnd: 110,
-      scaleDownStart: 0,
-      scaleDownEnd: 0,
-      finalScale: 120,
-    },
-  };
+  // RENDER_CONFIG 사용
+  private config = { ...RENDER_CONFIG.subtitle, fontPath: '' };
   private ctx: CanvasRenderingContext2D | null = null;
 
   constructor(fontFileName?: string, fontSize?: number) {

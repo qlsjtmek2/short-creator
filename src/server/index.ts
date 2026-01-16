@@ -19,6 +19,7 @@ app.use(bodyParser.json());
 
 // Static Files (영상 재생용)
 app.use('/output', express.static(path.join(process.cwd(), 'output')));
+app.use('/assets', express.static(path.join(process.cwd(), 'assets')));
 
 // Routes
 app.use('/api', apiRoutes);

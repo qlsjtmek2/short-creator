@@ -31,6 +31,7 @@ export default function Step4_Editor({
   const [loading, setLoading] = useState(false);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
   const [currentFrame, setCurrentFrame] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false); // Playback state
   
   const playerRef = useRef<PlayerRef>(null);
 
@@ -74,16 +75,43 @@ export default function Step4_Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync Player State
+  // Sync Player State & Keyboard Listener
   useEffect(() => {
     const interval = setInterval(() => {
       if (playerRef.current) {
         const frame = playerRef.current.getCurrentFrame();
         if (frame !== null) setCurrentFrame(frame);
+        
+        // Remotion Player 자체의 재생 상태와 React 상태 동기화 (선택사항)
+        // 하지만 여기서는 우리가 제어하므로 생략 가능
       }
-    }, 1000 / 30); // 30 FPS update
-    return () => clearInterval(interval);
-  }, []);
+    }, 1000 / 30); 
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.code === 'Space' && e.target === document.body) {
+            e.preventDefault();
+            togglePlay();
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPlaying]); // Re-bind if needed, but togglePlay reference handles it
+
+  const togglePlay = () => {
+      if (playerRef.current) {
+          if (playerRef.current.isPlaying()) {
+              playerRef.current.pause();
+              setIsPlaying(false);
+          } else {
+              playerRef.current.play();
+              setIsPlaying(true);
+          }
+      }
+  };
 
   // Remotion Composition Props
   const compositionProps: ShortsComposition = useMemo(() => {
@@ -117,7 +145,7 @@ export default function Step4_Editor({
         text: seg.text,
         startFrame: frameCursor,
         durationInFrames: durationFrames,
-        transform: { x: 0, y: 1400, scale: 1, rotate: 0, opacity: 1 },
+        transform: { x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 },
         style: {
           fontFamily: 'Pretendard-Bold',
           fontSize: 60,
@@ -128,12 +156,16 @@ export default function Step4_Editor({
         }
       });
 
-      // 3. Audio
+      // 3. Audio (TTS)
       if (seg.audioUrl) {
+        const audioSrc = seg.audioUrl.startsWith('http') 
+            ? seg.audioUrl 
+            : `http://127.0.0.1:3001${seg.audioUrl}`;
+            
         layers.push({
             id: `tts-${seg.id}`,
             type: 'audio',
-            src: `http://127.0.0.1:3001${seg.audioUrl}`,
+            src: audioSrc,
             startFrame: frameCursor,
             volume: 1.0,
         });
@@ -144,7 +176,7 @@ export default function Step4_Editor({
           layers.push({
               id: `sfx-${seg.id}`,
               type: 'audio',
-              src: `/assets/sfx/${seg.sfx}.mp3`, 
+              src: `http://127.0.0.1:3001/assets/sfx/${seg.sfx}.mp3`, 
               startFrame: frameCursor,
               volume: 0.8,
           });
@@ -158,9 +190,10 @@ export default function Step4_Editor({
       height: 1920,
       fps: FPS,
       durationInFrames: frameCursor || 1, 
+      title: topic, 
       layers,
     };
-  }, [segments]);
+  }, [segments, topic]);
 
   // Handlers
   const updateSegment = (id: string, updates: Partial<EditorSegment>) => {
@@ -225,7 +258,9 @@ export default function Step4_Editor({
       <div className="flex-1 flex overflow-hidden">
         
         {/* Preview Area (Center) */}
-        <div className="flex-1 bg-black flex items-center justify-center p-8 relative">
+        <div className="flex-1 bg-black flex flex-col items-center justify-center p-8 relative">
+          
+          {/* Main Player */}
           <div className="relative h-full aspect-[9/16] shadow-2xl rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800">
             <Player
               ref={playerRef}
@@ -236,10 +271,13 @@ export default function Step4_Editor({
               compositionWidth={1080}
               compositionHeight={1920}
               style={{ width: '100%', height: '100%' }}
-              controls={false} // Custom controls via Timeline
-              clickToPlay={false} // Disable default click
+              controls={false} 
+              clickToPlay={false}
             />
           </div>
+
+          {/* Floating Play Button (Optional overlay) */}
+          {/* <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-4"> ... </div> */}
         </div>
 
         {/* Inspector (Right Sidebar) */}
@@ -330,7 +368,20 @@ export default function Step4_Editor({
       </div>
 
       {/* Bottom: Timeline */}
-      <div className="h-[250px] w-full">
+      <div className="h-[250px] w-full flex flex-col">
+        {/* Timeline Toolbar */}
+        <div className="h-10 bg-zinc-900 border-t border-zinc-800 flex items-center px-4 gap-4">
+            <button 
+                onClick={togglePlay}
+                className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-full text-white transition-colors"
+            >
+                {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+            </button>
+            <div className="text-xs font-mono text-zinc-500">
+                {new Date(currentFrame / FPS * 1000).toISOString().substr(14, 8)} / {new Date(compositionProps.durationInFrames / FPS * 1000).toISOString().substr(14, 8)}
+            </div>
+        </div>
+
         <Timeline 
           segments={segments}
           currentFrame={currentFrame}

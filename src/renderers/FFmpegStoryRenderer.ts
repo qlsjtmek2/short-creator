@@ -4,6 +4,7 @@ import * as path from 'path';
 import { createCanvas, registerFont } from 'canvas';
 import { IStoryVideoRenderer, EditorSegment } from '../../types/interfaces';
 import { StoryScriptWithAssets } from '../../types/common';
+import { RENDER_CONFIG } from '../config/render-config';
 
 /**
  * 타이틀 텍스트 세그먼트 (일반 텍스트 또는 강조 텍스트)
@@ -22,49 +23,8 @@ interface TitleSegment {
  * - 문장별 오디오 병합 + BGM 믹싱
  */
 export class FFmpegStoryRenderer implements IStoryVideoRenderer {
-  // 기본 설정값 (하드코딩)
-  private config = {
-    canvas: {
-      width: 1080,
-      height: 1920,
-    },
-    letterbox: {
-      top: 350,
-      bottom: 350,
-      color: 'black',
-    },
-    title: {
-      fontPath: '', // render() 메서드에서 설정됨
-      fontSize: 100,
-      fontColor: 'white',
-      highlightColor: '#FFDB58',
-      y: 150,
-      borderWidth: 2,
-      borderColor: 'black',
-      maxCharsPerLine: 15,
-      lineSpacing: 120,
-    },
-    kenBurns: {
-      startZoom: 1.0,
-      endZoom: 1.2,
-      zoomIncrement: 0.0001,
-      fps: 60,
-    },
-    audio: {
-      bgmPath: '', // render() 메서드에서 설정됨
-      ttsVolume: 1.0,
-      bgmVolume: 0.1,
-      sfxVolume: 0.8, // New
-    },
-    rendering: {
-      videoCodec: 'libx264',
-      preset: 'medium',
-      crf: 23,
-      pixelFormat: 'yuv420p',
-      audioCodec: 'aac',
-      audioBitrate: '192k',
-    },
-  };
+  // RENDER_CONFIG 사용
+  private config = { ...RENDER_CONFIG };
 
   /**
    * 스토리 스크립트를 영상으로 렌더링합니다.

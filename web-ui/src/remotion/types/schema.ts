@@ -64,6 +64,7 @@ export const ShortsCompositionSchema = z.object({
   height: z.number().default(1920),
   fps: z.number().default(30),
   durationInFrames: z.number(),
+  title: z.string().default(''), // Added
   layers: z.array(z.discriminatedUnion('type', [
     ImageLayerSchema,
     TextLayerSchema,
