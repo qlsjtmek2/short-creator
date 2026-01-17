@@ -26,9 +26,18 @@ export class AssetManager {
   /**
    * 키워드로 이미지를 검색하거나 직접 다운로드하여 로컬에 저장합니다.
    */
-  async prepareImage(keyword: string, imageUrl?: string, id?: string): Promise<string> {
-    const uniqueId = id || `${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const targetPath = path.join(this.outputDir, 'images', `img_${uniqueId}.jpg`);
+  async prepareImage(
+    keyword: string,
+    imageUrl?: string,
+    id?: string,
+  ): Promise<string> {
+    const uniqueId =
+      id || `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const targetPath = path.join(
+      this.outputDir,
+      'images',
+      `img_${uniqueId}.jpg`,
+    );
 
     if (imageUrl) {
       return this.downloadUrlToFile(imageUrl, targetPath);
@@ -42,9 +51,17 @@ export class AssetManager {
   /**
    * 텍스트를 오디오로 변환하여 로컬에 저장하고 길이를 반환합니다.
    */
-  async prepareAudio(text: string, id?: string): Promise<{ path: string; duration: number }> {
-    const uniqueId = id || `${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const targetPath = path.join(this.outputDir, 'audio', `aud_${uniqueId}.mp3`);
+  async prepareAudio(
+    text: string,
+    id?: string,
+  ): Promise<{ path: string; duration: number }> {
+    const uniqueId =
+      id || `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const targetPath = path.join(
+      this.outputDir,
+      'audio',
+      `aud_${uniqueId}.mp3`,
+    );
 
     const generatedPath = await this.ttsProvider.generateAudio(text, 'neutral');
     fs.copyFileSync(generatedPath, targetPath);
@@ -56,7 +73,10 @@ export class AssetManager {
   /**
    * URL의 파일을 로컬 경로로 다운로드합니다.
    */
-  private async downloadUrlToFile(url: string, targetPath: string): Promise<string> {
+  private async downloadUrlToFile(
+    url: string,
+    targetPath: string,
+  ): Promise<string> {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     fs.writeFileSync(targetPath, response.data);
     return targetPath;

@@ -8,9 +8,12 @@ export class SubtitleService {
   /**
    * 문장 리스트를 Manifest용 자막 청크 리스트로 변환합니다.
    */
-  createSubtitleChunks(sentences: StorySentence[], fps: number = 60): SubtitleChunk[] {
+  createSubtitleChunks(
+    sentences: StorySentence[],
+    fps: number = 60,
+  ): SubtitleChunk[] {
     const chunks: SubtitleChunk[] = [];
-    
+
     sentences.forEach((sentence, sIdx) => {
       const events = this.splitSentenceIntoEvents(sentence);
       events.forEach((event, eIdx) => {
@@ -43,10 +46,7 @@ export class SubtitleService {
 
     for (const word of words) {
       currentChunk.push(word);
-      if (
-        currentChunk.length >= wordsPerChunk ||
-        /[.?!,]$/.test(word)
-      ) {
+      if (currentChunk.length >= wordsPerChunk || /[.?!,]$/.test(word)) {
         resultChunks.push(currentChunk.join(' '));
         currentChunk = [];
       }
@@ -61,7 +61,8 @@ export class SubtitleService {
 
     return resultChunks.map((chunkText) => {
       const chunkChars = chunkText.replace(/\s/g, '').length;
-      const chunkDuration = totalChars > 0 ? (chunkChars / totalChars) * duration : duration;
+      const chunkDuration =
+        totalChars > 0 ? (chunkChars / totalChars) * duration : duration;
 
       const event: SubtitleEvent = {
         start: currentStartTime,

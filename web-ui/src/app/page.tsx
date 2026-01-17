@@ -24,8 +24,8 @@ export default function ShortCreator() {
   const [topic, setTopic] = useState('');
   const [script, setScript] = useState<ScriptSegment[]>([]);
   const [assets, setAssets] = useState<AssetGroup[]>([]);
-  const [segments, setSegments] = useState<EditorSegment[]>([]); // Restored
-  const [manifest, setManifest] = useState<RenderManifest | null>(null); // Restored
+  // const [segments, setSegments] = useState<EditorSegment[]>([]);
+  // const [manifest, setManifest] = useState<RenderManifest | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -102,8 +102,8 @@ export default function ShortCreator() {
       let finalScript: ScriptSegment[] = script;
 
       if (finalSegments && finalSegments.length > 0) {
-        setSegments(finalSegments);
-        if (finalManifest) setManifest(finalManifest);
+        // setSegments(finalSegments);
+        // if (finalManifest) setManifest(finalManifest);
 
         // EditorSegment -> ScriptSegment & AssetUrls 변환
         assetUrls = finalSegments.map((s) => s.imageUrl || '');

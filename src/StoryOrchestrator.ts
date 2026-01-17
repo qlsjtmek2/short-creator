@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import {
   IStoryGenerator,
@@ -12,6 +11,7 @@ import { StorySentence, StoryScriptWithAssets } from '../types/common';
 import { AssetManager } from './services/AssetManager';
 import { SubtitleService } from './services/SubtitleService';
 import { LayoutEngine } from './core/LayoutEngine';
+import { RenderManifest } from '../types/rendering';
 
 /**
  * 스토리 파이프라인 전용 오케스트레이터
@@ -106,16 +106,22 @@ export class StoryOrchestrator {
 
     // 3. 자막 정밀 분할 적용 (SubtitleService 활용)
     // LayoutEngine의 기본 분할 대신 SubtitleService의 정교한 분할 결과를 Manifest에 반영
-    const subtitleChunks = this.subtitleService.createSubtitleChunks(sentencesWithTimestamps);
+    const subtitleChunks = this.subtitleService.createSubtitleChunks(
+      sentencesWithTimestamps,
+    );
     manifest.elements = [
       ...manifest.elements.filter((e) => e.type !== 'subtitle_chunk'),
       ...subtitleChunks,
     ];
 
     // 4. 최종 영상 렌더링
-    const outputPath = path.join(outputDir, 'videos', `story_${Date.now()}.mp4`);
+    const outputPath = path.join(
+      outputDir,
+      'videos',
+      `story_${Date.now()}.mp4`,
+    );
     console.log('🚀 Starting final render...');
-    
+
     return this.videoRenderer.renderFromManifest(manifest, outputPath);
   }
 
@@ -123,13 +129,21 @@ export class StoryOrchestrator {
    * (Phase 21) Manifest 기반 직접 렌더링
    */
   async renderWithManifest(
-    manifest: any,
+    manifest: RenderManifest,
     outputDir: string,
     options?: { titleFont?: string },
   ): Promise<string> {
     console.log('🎬 Rendering video directly from Manifest...');
-    const outputPath = path.join(outputDir, 'videos', `manifest_${Date.now()}.mp4`);
-    return this.videoRenderer.renderFromManifest(manifest, outputPath, options?.titleFont);
+    const outputPath = path.join(
+      outputDir,
+      'videos',
+      `manifest_${Date.now()}.mp4`,
+    );
+    return this.videoRenderer.renderFromManifest(
+      manifest,
+      outputPath,
+      options?.titleFont,
+    );
   }
 
   /**
@@ -143,8 +157,13 @@ export class StoryOrchestrator {
     return Promise.all(
       sentences.map(async (s, i) => {
         const id = `${Date.now()}_${i}`;
-        const imagePath = await this.assetManager.prepareImage(s.keyword, imageUrls?.[i], id);
-        const { path: audioPath, duration } = await this.assetManager.prepareAudio(s.text, id);
+        const imagePath = await this.assetManager.prepareImage(
+          s.keyword,
+          imageUrls?.[i],
+          id,
+        );
+        const { path: audioPath, duration } =
+          await this.assetManager.prepareAudio(s.text, id);
 
         return {
           ...s,
