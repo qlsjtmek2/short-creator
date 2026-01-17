@@ -115,12 +115,14 @@ async function bootstrap() {
   }
 
   // DI (Dependency Injection)
+  const outputDir = path.join(process.cwd(), 'output');
   const storyOrchestrator = new StoryOrchestrator(
     new GeminiStoryGenerator(),
     imageProvider,
     ttsProvider,
     new SubtitleGenerator(),
     new FFmpegStoryRenderer(),
+    outputDir,
   );
 
   try {

@@ -208,7 +208,7 @@ const SubtitleChunkView: React.FC<{
         position: 'absolute',
         left: 0,
         right: 0,
-        bottom: RENDER_CONFIG.letterbox.bottom / 2 - 20,
+        top: RENDER_CONFIG.subtitle.y, // 고정된 y 좌표 사용
         textAlign: 'center',
         fontFamily: RENDER_CONFIG.subtitle.fontFamily || 'Pretendard-Bold',
         fontSize: RENDER_CONFIG.subtitle.fontSize,

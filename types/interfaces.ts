@@ -181,7 +181,7 @@ export interface IStoryVideoRenderer {
   ): Promise<string>;
 
   // Phase 21: SSOT Rendering
-  renderFromManifest?(
+  renderFromManifest(
     manifest: RenderManifest,
     outputPath: string,
     titleFont?: string,

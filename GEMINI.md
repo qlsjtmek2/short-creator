@@ -22,50 +22,48 @@
 - **Language:** TypeScript
 - **Media Processing:** FFmpeg (Final Render), Remotion Player (Preview), Node Canvas, FFprobe
 
-## Architecture
+## Architecture (Refactored Phase 21)
 
 - **Web UI (`web-ui/`):** 전문적인 영상 편집기 클라이언트.
   - `src/remotion/`: 미리보기용 비디오 컴포넌트 및 FFmpeg 시뮬레이터.
-  - `src/components/editor/`: 타임라인 및 인스펙터 UI 컴포넌트.
-- **API Server (`src/server/`):** 오디오 미리보기(TTS) 및 렌더링 작업 관리.
-- **Shared Config (`src/config/`, `web-ui/src/config/`):** 렌더링 엔진 간 격차 해소를 위한 통합 설정 (`render-config.ts`).
-- **Story Orchestrator (`src/StoryOrchestrator.ts`):** 편집된 데이터(`EditorSegment`)를 반영한 타임라인 계산 및 렌더링 파이프라인 관리.
-- **Renderers (`src/renderers/`):** `FFmpegStoryRenderer`를 통한 고속 영상 합성 및 VFX/SFX 적용.
+  - `src/types/`, `src/config/`: 루트의 공통 타입 및 설정을 심볼릭 링크로 공유 (SSOT).
+- **Core Services (`src/services/`):** Orchestrator의 책임을 분산한 전문 서비스 레이어.
+  - `AssetManager`: 이미지/오디오 에셋의 다운로드, 로컬 저장 및 파일 시스템 관리.
+  - `SubtitleService`: 자막의 정밀한 분할(Chunking) 및 타이밍 계산.
+- **Layout Engine (`src/core/LayoutEngine.ts`):** 비주얼 레이아웃(타이틀, Ken Burns) 계산 및 `RenderManifest` 생성 전담.
+- **Story Orchestrator (`src/StoryOrchestrator.ts`):** 서비스들을 조립하여 전체 흐름을 제어하고 최종 `RenderManifest`를 도출하는 조율자.
+- **Renderers (`src/renderers/`):** `FFmpegStoryRenderer`가 `RenderManifest`를 입력받아 최종 영상을 합성.
 
-## Building and Running
+## Development Guidelines (Phase 21+)
 
-### Prerequisites
-
-- Node.js v18+
-- FFmpeg 필수 설치 (`brew install ffmpeg`)
-- `.env` 파일에 API Key 설정 (Gemini, Pexels 등)
-
-### Running GUI Mode (Recommended)
-
-1.  **Backend:** `npm run server` (Port: 3001)
-2.  **Frontend:** `cd web-ui && npm run dev` (Port: 3000)
-3.  브라우저에서 `http://localhost:3000` 접속
+1.  **Standardized Rendering (Manifest-First):** 모든 영상 효과와 배치는 `RenderManifest`를 통해 정의되어야 합니다. 렌더러에 직접 필터를 추가하기보다 `Manifest`에 새로운 엘리먼트 타입을 정의하고 `LayoutEngine`에서 이를 계산하는 방식을 지향합니다.
+2.  **Service Responsibility:**
+    - 파일 시스템 작업(복사, 생성, 삭제)은 `AssetManager`에서만 수행합니다.
+    - 비주얼 계산 로직은 `LayoutEngine`에 집중시키고, 프론트엔드(`web-ui`)와 공유할 수 있도록 설계합니다.
+    - `StoryOrchestrator`는 비즈니스 로직(순서, 조립)만 담당하며 저수준 API 호출은 지양합니다.
+3.  **Single Source of Truth (SSOT):**
+    - `RENDER_CONFIG`나 공통 타입은 반드시 루트(`src/config/`, `types/`)에서 수정합니다. `web-ui`는 심볼릭 링크를 통해 이를 자동으로 반영합니다.
+4.  **FFmpeg Renderer Simplicity:** `FFmpegStoryRenderer`는 `RenderManifest`를 해석하여 FFmpeg 명령어로 변환하는 "컴파일러" 역할만 수행해야 합니다. 복잡한 타이밍 계산이나 텍스트 레이아웃 로직을 렌더러 내부에 두지 마십시오.
 
 ## Directory Structure
 
 ```
 /
-├── assets/           # Fonts (Pretendard), Music (BGM), SFX
-├── src/              # Backend source code
-│   ├── config/       # Shared rendering configuration (SSOT)
-│   ├── generators/   # Gemini, Subtitle generators
-│   ├── providers/    # TTS, Image, Meme providers
-│   ├── renderers/    # FFmpeg story renderer (with VFX/SFX support)
-│   ├── server/       # Express API server
+├── assets/           # Fonts, Music, SFX
+├── types/            # Common Interfaces (Shared with web-ui via symlink)
+├── src/
+│   ├── config/       # Shared RENDER_CONFIG (Shared with web-ui via symlink)
+│   ├── core/         # LayoutEngine (Visual layout logic)
+│   ├── services/     # AssetManager, SubtitleService (Domain logic)
+│   ├── generators/   # Gemini, Subtitle ASS generators
+│   ├── providers/    # TTS, Image providers (External APIs)
+│   ├── renderers/    # FFmpeg renderer (Manifest-based)
 │   └── StoryOrchestrator.ts
-├── web-ui/           # Next.js 15 Frontend
-│   ├── src/config/   # Synced rendering configuration
-│   └── src/remotion/ # Video preview components & assets
-└── types/            # EditorSegment & common interfaces
+└── web-ui/           # Next.js 15 Frontend
 ```
 
 ## Project Status
 
-- **Phase 20 Completion:** 2026-01-16 완료.
-- **Maintenance Mode:** 영상 편집기 및 WYSIWYG 미리보기 기능 안정화.
-- **Key Update:** FFmpeg 렌더링과 Remotion 미리보기 간의 100% 시각적 동기화 달성.
+- **Phase 21 Completion:** 2026-01-17 완료.
+- **Refactoring:** 오케스트레이터 경량화 및 Manifest 기반 렌더링 단일화 달성.
+- **Key Update:** 백엔드/프론트엔드 간 설정 및 타입 동기화(Symlink) 적용.

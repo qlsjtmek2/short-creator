@@ -80,6 +80,8 @@ const imageProviders: Record<string, IImageProvider> = {
 // Default Image Provider for Orchestrator (used for automatic flow)
 const defaultImageProvider = pexelsProvider;
 
+const OUTPUT_DIR = path.resolve(process.cwd(), 'output');
+
 // TTS Provider
 let ttsProvider;
 if (process.env.ELEVENLABS_API_KEY) {
@@ -101,9 +103,8 @@ const orchestrator = new StoryOrchestrator(
   ttsProvider,
   subtitleGenerator,
   videoRenderer,
+  OUTPUT_DIR,
 );
-
-const OUTPUT_DIR = path.resolve(process.cwd(), 'output');
 
 // --- Routes ---
 

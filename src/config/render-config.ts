@@ -29,8 +29,9 @@ export const RENDER_CONFIG = {
     outline: 8,
     shadow: 4,
     alignment: 2,
-    marginV: 500, // ASS MarginV (FFmpeg 렌더링 시 위치)
+    y: 1700, // 화면 상단으로부터의 절대 위치 (FFmpeg/Remotion 공용)
     maxCharsPerLine: 15,
+    marginV: 100,
     animation: {
       popInDuration: 100,
       scaleUpStart: 0,

@@ -24,6 +24,8 @@ export default function ShortCreator() {
   const [topic, setTopic] = useState('');
   const [script, setScript] = useState<ScriptSegment[]>([]);
   const [assets, setAssets] = useState<AssetGroup[]>([]);
+  const [segments, setSegments] = useState<EditorSegment[]>([]); // Restored
+  const [manifest, setManifest] = useState<RenderManifest | null>(null); // Restored
   const [jobId, setJobId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
