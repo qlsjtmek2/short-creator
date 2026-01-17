@@ -158,7 +158,6 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
       const filterComplex = this.buildFilterComplexFromManifest(
         manifest,
         imageElements.length,
-        audioElements.length,
       );
 
       const ffmpegCommand = command
@@ -313,7 +312,6 @@ export class FFmpegStoryRenderer implements IStoryVideoRenderer {
         !!bgmPath && fs.existsSync(bgmPath),
         editorSegments,
         sfxInputs,
-        script.sentences.length + (bgmPath ? 2 : 1), // Base input count (Images + TTS + BGM?)
       );
 
       const ffmpegCommand = command

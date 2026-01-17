@@ -138,7 +138,7 @@ export interface IStoryGenerator {
  * ASS 자막 파일을 생성합니다.
  */
 export interface ISubtitleGenerator {
-  generateASS(events: SubtitleEvent[], outputPath: string): Promise<void>;
+  generateASS(events: SubtitleEvent[], outputPath: string): Promise<string>;
 }
 
 /**

@@ -95,18 +95,35 @@ export default function Step4_Editor({
       try {
         const scriptData = {
           title: topic,
-          sentences: segments.map((s) => ({
-            text: s.text,
-            imagePath: s.imageUrl?.replace(
-              'http://127.0.0.1:3001/output',
-              'output',
-            ),
-            audioPath: s.audioUrl?.replace(
-              'http://127.0.0.1:3001/output',
-              'output',
-            ),
-            duration: s.audioDuration,
-          })),
+          sentences: segments.map((s) => {
+            let imagePath = s.imageUrl || '';
+            let audioPath = s.audioUrl || '';
+
+            // Handle URL to filesystem path conversion
+            if (imagePath.startsWith('http')) {
+              // Full URL: try to keep it for remote, but if local, strip domain
+              if (imagePath.includes('/output/')) {
+                imagePath = 'output/' + imagePath.split('/output/')[1];
+              }
+            } else if (imagePath.startsWith('/output/')) {
+              imagePath = imagePath.substring(1); // Remove leading slash
+            }
+
+            if (audioPath.startsWith('http')) {
+              if (audioPath.includes('/output/')) {
+                audioPath = 'output/' + audioPath.split('/output/')[1];
+              }
+            } else if (audioPath.startsWith('/output/')) {
+              audioPath = audioPath.substring(1);
+            }
+
+            return {
+              text: s.text,
+              imagePath,
+              audioPath,
+              duration: s.audioDuration,
+            };
+          }),
         };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const m = await getRenderManifest(scriptData as any, segments);
@@ -143,7 +160,6 @@ export default function Step4_Editor({
       clearInterval(interval);
       window.removeEventListener('keydown', handleKeyDown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const togglePlay = useCallback(() => {
